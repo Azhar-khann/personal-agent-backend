@@ -1,14 +1,24 @@
-/**
- * Express 5 server — all endpoints from App_design_spec.md §8.
- *
- * Stage 0 placeholder: the workspace wiring and env loading are proven here.
- * Stage 2 replaces this with the real app (routers, Clerk, error middleware).
- */
+import { closeDb } from "@personal-agent/core";
+import { pino } from "pino";
 
-import { loadEnv } from "@personal-agent/core";
+import { createApp } from "./app.js";
+import { loadApiEnv } from "./env.js";
 
-const env = loadEnv();
+const env = loadApiEnv();
+const logger = pino({ level: env.LOG_LEVEL });
+const app = createApp(env, logger);
 
-console.log(
-  `[api] stage 0 placeholder — env ok (NODE_ENV=${env.NODE_ENV}, PORT=${env.PORT})`,
-);
+const server = app.listen(env.PORT, (error) => {
+  if (error) throw error;
+  logger.info({ port: env.PORT }, "api listening");
+});
+
+function shutdown(signal: NodeJS.Signals): void {
+  logger.info({ signal }, "shutting down");
+  server.close(() => {
+    void closeDb().finally(() => process.exit(0));
+  });
+}
+
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);

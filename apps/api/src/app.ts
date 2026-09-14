@@ -1,0 +1,38 @@
+import { clerkMiddleware } from "@clerk/express";
+import cors from "cors";
+import express from "express";
+import type { Logger } from "pino";
+import { pinoHttp } from "pino-http";
+
+import { requireUser } from "./auth.js";
+import type { ApiEnv } from "./env.js";
+import { errorHandler, notFound } from "./http.js";
+import { categoriesRouter } from "./routes/categories.js";
+import { meRouter } from "./routes/me.js";
+
+export function createApp(env: ApiEnv, logger: Logger) {
+  const app = express();
+
+  app.disable("x-powered-by");
+  app.use(
+    pinoHttp({
+      logger,
+      redact: ["req.headers.authorization", "req.headers.cookie"],
+    }),
+  );
+  app.use(cors({ origin: env.CORS_ORIGINS }));
+  app.use(express.json({ limit: "100kb" }));
+  // Reads the Clerk session token if present. Rejects nothing by itself.
+  app.use(clerkMiddleware());
+
+  // Public
+  app.use("/api/categories", categoriesRouter);
+
+  // User app
+  app.use("/api/me", requireUser, meRouter);
+
+  app.use(notFound);
+  app.use(errorHandler);
+
+  return app;
+}

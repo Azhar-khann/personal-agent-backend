@@ -7,6 +7,8 @@ import { pinoHttp } from "pino-http";
 import { requireUser } from "./auth.js";
 import type { ApiEnv } from "./env.js";
 import { errorHandler, notFound } from "./http.js";
+import { adminRouter } from "./routes/admin.js";
+import { businessRouter } from "./routes/business.js";
 import { categoriesRouter } from "./routes/categories.js";
 import { meRouter } from "./routes/me.js";
 
@@ -30,6 +32,12 @@ export function createApp(env: ApiEnv, logger: Logger) {
 
   // User app
   app.use("/api/me", requireUser, meRouter);
+
+  // Business app
+  app.use("/api/business", requireUser, businessRouter);
+
+  // Admin
+  app.use("/api/admin", requireUser, adminRouter);
 
   app.use(notFound);
   app.use(errorHandler);

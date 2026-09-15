@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { currentUser, type User } from "../auth.js";
 import { HttpError, parse } from "../http.js";
+import { phoneNumber } from "../validation.js";
 
 /** GET PATCH /api/me — profile, home address and timezone (§8). */
 export const meRouter = Router();
@@ -22,11 +23,7 @@ const UpdateMeBody = z
   .object({
     name: z.string().trim().min(1).max(100).nullable(),
     email: z.string().trim().email().max(254).nullable(),
-    phone: z
-      .string()
-      .trim()
-      .regex(/^\+[1-9]\d{6,14}$/, "must be in international format, e.g. +971501234567")
-      .nullable(),
+    phone: phoneNumber.nullable(),
     homeAddress: z.string().trim().min(1).max(500).nullable(),
     homeLat: z.number().min(-90).max(90).nullable(),
     homeLng: z.number().min(-180).max(180).nullable(),

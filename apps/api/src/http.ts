@@ -38,6 +38,19 @@ export function parse<T extends z.ZodTypeAny>(
   return result.data;
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A route's :id, which must be a uuid. A malformed id is simply not found —
+ * letting it reach Postgres would turn a bad URL into a 500.
+ */
+export function uuidParam(value: unknown): string {
+  if (typeof value !== "string" || !UUID.test(value)) {
+    throw new HttpError(404, "not_found", "Not found");
+  }
+  return value;
+}
+
 export const notFound: RequestHandler = (req) => {
   throw new HttpError(404, "not_found", `No route for ${req.method} ${req.path}`);
 };

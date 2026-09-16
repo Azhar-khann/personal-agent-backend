@@ -1,4 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
+import type { PgDatabase } from "drizzle-orm/pg-core";
+import { drizzle, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 
 import { loadEnv } from "../env.js";
@@ -13,6 +14,9 @@ import { loadEnv } from "../env.js";
 
 export type Sql = ReturnType<typeof postgres>;
 export type Database = ReturnType<typeof drizzle>;
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+/** Anything a query can run on: the pool, or an open transaction. */
+export type Executor = PgDatabase<PostgresJsQueryResultHKT, Record<string, unknown>>;
 
 let sqlClient: Sql | undefined;
 let dbClient: Database | undefined;

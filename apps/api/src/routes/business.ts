@@ -15,6 +15,7 @@ import {
 } from "../business.js";
 import { HttpError, parse } from "../http.js";
 import { phoneNumber, uaeLatitude, uaeLongitude } from "../validation.js";
+import { businessOrdersRouter } from "./business-orders.js";
 import { businessScheduleRouter } from "./business-schedule.js";
 import { businessServicesRouter } from "./business-services.js";
 import { businessStaffRouter } from "./business-staff.js";
@@ -188,3 +189,4 @@ businessRouter.get("/stats", async (req, res) => {
 businessRouter.use("/services", businessServicesRouter);
 businessRouter.use("/staff", businessStaffRouter);
 businessRouter.use(businessScheduleRouter);
+businessRouter.use(businessOrdersRouter);

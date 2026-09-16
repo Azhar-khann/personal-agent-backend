@@ -16,3 +16,21 @@ const outsideUae = "must be inside the UAE";
 
 export const uaeLatitude = z.number().min(UAE.minLat, outsideUae).max(UAE.maxLat, outsideUae);
 export const uaeLongitude = z.number().min(UAE.minLng, outsideUae).max(UAE.maxLng, outsideUae);
+
+/** An ISO 8601 date-time that states its offset, e.g. 2030-01-07T15:00:00+04:00. */
+export const dateTime = z
+  .string()
+  .datetime({ offset: true })
+  .transform((value) => new Date(value));
+
+/** `?from=&to=` query parameters, no more than `maxDays` apart. */
+export function timeRangeQuery(maxDays: number) {
+  return z
+    .object({ from: dateTime, to: dateTime })
+    .strict()
+    .refine((range) => range.to > range.from, { message: "to must be after from", path: ["to"] })
+    .refine((range) => range.to.getTime() - range.from.getTime() <= maxDays * 24 * 60 * 60_000, {
+      message: `from and to may be at most ${maxDays} days apart`,
+      path: ["to"],
+    });
+}

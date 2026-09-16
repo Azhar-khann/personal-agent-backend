@@ -76,7 +76,8 @@ export type FindOptionsResult = {
 export type AvailabilityData = {
   hours: OpeningHours[];
   closures: Interval[];
-  appointments: BusyAppointment[];
+  /** Carries the order, so a reschedule can leave its own appointment out. */
+  appointments: (BusyAppointment & { orderId: string })[];
 };
 
 type CandidateRow = {
@@ -188,6 +189,7 @@ export async function loadAvailability(
     db
       .select({
         businessId: appointments.businessId,
+        orderId: appointments.orderId,
         resourceIndex: appointments.resourceIndex,
         start: appointments.scheduledAt,
         end: appointments.endsAt,

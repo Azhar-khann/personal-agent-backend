@@ -1,4 +1,4 @@
-import { getDb, schema, type Database } from "@personal-agent/core";
+import { getDb, schema, type Transaction } from "@personal-agent/core";
 import { asc, eq } from "drizzle-orm";
 import type { Request, RequestHandler } from "express";
 
@@ -53,8 +53,6 @@ export const requireOwner: RequestHandler = (req, _res, next) => {
   }
   next();
 };
-
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 /**
  * One business per person (signup and adding staff both apply it). Locks the

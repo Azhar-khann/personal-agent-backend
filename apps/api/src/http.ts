@@ -1,3 +1,4 @@
+import { OrderError, type OrderErrorCode } from "@personal-agent/core";
 import type { ErrorRequestHandler, RequestHandler } from "express";
 import type { z } from "zod";
 
@@ -55,6 +56,13 @@ export const notFound: RequestHandler = (req) => {
   throw new HttpError(404, "not_found", `No route for ${req.method} ${req.path}`);
 };
 
+const ORDER_ERROR_STATUS: Record<OrderErrorCode, number> = {
+  not_found: 404,
+  invalid_request: 400,
+  invalid_status: 409,
+  slot_unavailable: 409,
+};
+
 /** Malformed JSON from express.json(). */
 function isBodyParseError(error: unknown): boolean {
   return (
@@ -77,6 +85,13 @@ export const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
         message: error.message,
         ...(error.details === undefined ? {} : { details: error.details }),
       },
+    });
+    return;
+  }
+
+  if (error instanceof OrderError) {
+    res.status(ORDER_ERROR_STATUS[error.code]).json({
+      error: { code: error.code, message: error.message },
     });
     return;
   }

@@ -9,6 +9,8 @@
  * Adding a category needs no code change — only rows here.
  */
 
+import type { Confirmation, LocationMode, PricingMode } from "../service-settings.js";
+
 export type OnboardingField = {
   key: string;
   type: "bool" | "text" | "number" | "select";
@@ -38,7 +40,31 @@ export type CanonicalServiceSeed = {
   categoryId: string;
   name: string;
   aliases: string[];
-  typicalDurationMin: number;
+  /** Length of the single job step. */
+  durationMin: number;
+  /** Overrides of the category's defaults below, for one service. */
+  locationMode?: LocationMode;
+  pricingMode?: PricingMode;
+  unitLabel?: string;
+  confirmation?: Confirmation;
+};
+
+/**
+ * Default service settings by category. Home services happen at the
+ * customer's, at a from-price the visit confirms; everything else is a fixed
+ * price at the shop. All instant and single-step — the Phase 1 set.
+ */
+export const CATEGORY_SERVICE_DEFAULTS: Record<
+  string,
+  { locationMode: LocationMode; pricingMode: PricingMode }
+> = {
+  barber: { locationMode: "at_business", pricingMode: "fixed" },
+  salon: { locationMode: "at_business", pricingMode: "fixed" },
+  dentist: { locationMode: "at_business", pricingMode: "fixed" },
+  car_service: { locationMode: "at_business", pricingMode: "fixed" },
+  ac_maintenance: { locationMode: "at_customer", pricingMode: "from" },
+  plumber: { locationMode: "at_customer", pricingMode: "from" },
+  handyman: { locationMode: "at_customer", pricingMode: "from" },
 };
 
 /** Every category's request_schema needs at least these two (§4). */
@@ -213,28 +239,28 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "barber",
     name: "Men's Haircut",
     aliases: ["haircut", "hair cut", "trim", "gents haircut", "mens cut", "cut"],
-    typicalDurationMin: 30,
+    durationMin:30,
   },
   {
     id: "beard_trim",
     categoryId: "barber",
     name: "Beard Trim",
     aliases: ["beard", "beard shaping", "beard cut"],
-    typicalDurationMin: 20,
+    durationMin:20,
   },
   {
     id: "shave",
     categoryId: "barber",
     name: "Shave",
     aliases: ["wet shave", "razor shave", "clean shave"],
-    typicalDurationMin: 30,
+    durationMin:30,
   },
   {
     id: "kids_haircut",
     categoryId: "barber",
     name: "Kids' Haircut",
     aliases: ["child haircut", "boy haircut", "kids cut"],
-    typicalDurationMin: 20,
+    durationMin:20,
   },
 
   // --- salon --------------------------------------------------------------
@@ -243,42 +269,42 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "salon",
     name: "Women's Haircut",
     aliases: ["ladies haircut", "ladies cut", "womens cut"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "hair_colour",
     categoryId: "salon",
     name: "Hair Colouring",
     aliases: ["hair color", "colour", "dye", "highlights", "balayage"],
-    typicalDurationMin: 120,
+    durationMin:120,
   },
   {
     id: "blow_dry",
     categoryId: "salon",
     name: "Blow Dry",
     aliases: ["blowdry", "blow-dry", "styling"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "manicure",
     categoryId: "salon",
     name: "Manicure",
     aliases: ["nails", "gel nails", "nail polish"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "pedicure",
     categoryId: "salon",
     name: "Pedicure",
     aliases: ["foot care", "toe nails"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "facial",
     categoryId: "salon",
     name: "Facial",
     aliases: ["face treatment", "skin treatment"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
 
   // --- dentist ------------------------------------------------------------
@@ -287,35 +313,35 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "dentist",
     name: "Dental Check-up",
     aliases: ["checkup", "check up", "dental exam", "consultation"],
-    typicalDurationMin: 30,
+    durationMin:30,
   },
   {
     id: "teeth_cleaning",
     categoryId: "dentist",
     name: "Teeth Cleaning",
     aliases: ["scaling", "polishing", "hygienist", "cleaning"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "filling",
     categoryId: "dentist",
     name: "Filling",
     aliases: ["cavity", "tooth filling", "composite"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "tooth_extraction",
     categoryId: "dentist",
     name: "Tooth Extraction",
     aliases: ["pull tooth", "remove tooth", "extraction"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "teeth_whitening",
     categoryId: "dentist",
     name: "Teeth Whitening",
     aliases: ["whitening", "bleaching"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
 
   // --- ac_maintenance -----------------------------------------------------
@@ -324,28 +350,28 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "ac_maintenance",
     name: "AC Servicing",
     aliases: ["ac service", "ac maintenance", "aircon service", "ac cleaning"],
-    typicalDurationMin: 90,
+    durationMin:90,
   },
   {
     id: "ac_gas_refill",
     categoryId: "ac_maintenance",
     name: "AC Gas Refill",
     aliases: ["gas refill", "freon", "regas", "ac not cooling"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "ac_repair",
     categoryId: "ac_maintenance",
     name: "AC Repair",
     aliases: ["ac broken", "ac fix", "aircon repair"],
-    typicalDurationMin: 90,
+    durationMin:90,
   },
   {
     id: "duct_cleaning",
     categoryId: "ac_maintenance",
     name: "Duct Cleaning",
     aliases: ["ducting", "air duct", "vent cleaning"],
-    typicalDurationMin: 180,
+    durationMin:180,
   },
 
   // --- plumber ------------------------------------------------------------
@@ -354,35 +380,35 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "plumber",
     name: "Leak Repair",
     aliases: ["leak", "leaking pipe", "water leak", "dripping"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "drain_unblocking",
     categoryId: "plumber",
     name: "Drain Unblocking",
     aliases: ["blocked drain", "clogged", "blockage", "slow drain"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "water_heater",
     categoryId: "plumber",
     name: "Water Heater Repair",
     aliases: ["geyser", "boiler", "no hot water"],
-    typicalDurationMin: 90,
+    durationMin:90,
   },
   {
     id: "tap_toilet_repair",
     categoryId: "plumber",
     name: "Tap & Toilet Repair",
     aliases: ["tap", "faucet", "toilet", "flush", "cistern"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "water_tank_cleaning",
     categoryId: "plumber",
     name: "Water Tank Cleaning",
     aliases: ["tank cleaning", "water tank"],
-    typicalDurationMin: 120,
+    durationMin:120,
   },
 
   // --- handyman -----------------------------------------------------------
@@ -391,35 +417,35 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "handyman",
     name: "Furniture Assembly",
     aliases: ["assemble", "ikea", "flat pack", "build furniture"],
-    typicalDurationMin: 90,
+    durationMin:90,
   },
   {
     id: "tv_wall_mounting",
     categoryId: "handyman",
     name: "TV & Wall Mounting",
     aliases: ["mount tv", "hang", "wall mount", "shelf", "picture hanging"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "painting",
     categoryId: "handyman",
     name: "Painting",
     aliases: ["paint", "wall painting", "touch up"],
-    typicalDurationMin: 240,
+    durationMin:240,
   },
   {
     id: "door_lock_repair",
     categoryId: "handyman",
     name: "Door & Lock Repair",
     aliases: ["door", "lock", "handle", "hinge"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "curtain_installation",
     categoryId: "handyman",
     name: "Curtain Installation",
     aliases: ["curtains", "blinds", "curtain rail"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
 
   // --- car_service --------------------------------------------------------
@@ -428,41 +454,41 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     categoryId: "car_service",
     name: "Oil Change",
     aliases: ["oil", "oil service", "lube"],
-    typicalDurationMin: 45,
+    durationMin:45,
   },
   {
     id: "full_car_service",
     categoryId: "car_service",
     name: "Full Service",
     aliases: ["car service", "major service", "full service"],
-    typicalDurationMin: 180,
+    durationMin:180,
   },
   {
     id: "tyre_replacement",
     categoryId: "car_service",
     name: "Tyre Replacement",
     aliases: ["tyres", "tires", "puncture", "wheel"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
   {
     id: "battery_replacement",
     categoryId: "car_service",
     name: "Battery Replacement",
     aliases: ["battery", "car wont start", "jump start"],
-    typicalDurationMin: 30,
+    durationMin:30,
   },
   {
     id: "brake_service",
     categoryId: "car_service",
     name: "Brake Service",
     aliases: ["brakes", "brake pads", "brake discs"],
-    typicalDurationMin: 120,
+    durationMin:120,
   },
   {
     id: "car_ac_regas",
     categoryId: "car_service",
     name: "Car AC Regas",
     aliases: ["car ac", "car aircon", "car cooling"],
-    typicalDurationMin: 60,
+    durationMin:60,
   },
 ];

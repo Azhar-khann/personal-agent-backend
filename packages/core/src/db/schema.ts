@@ -1,10 +1,13 @@
 /**
- * The 18 tables from App_design_spec.md §3, plus `admins`.
+ * The tables from App_design_spec.md §3, with the approved departures:
+ * `admins` added; `bookings` replaced by `orders`, `appointments`, `quotes`
+ * and `order_events`; and the four service settings on `business_services`
+ * (defaults on `canonical_services`). 21 tables.
  *
- * Column names, types, defaults and CHECK constraints follow the spec exactly.
- * Two additions to `bookings` (`buffer_min`, `ends_at`) exist so the
- * no_double_booking exclusion constraint can enforce the buffer — see
- * migrations/0001_booking_guard.sql for why it cannot be expressed inline.
+ * Column names, types, defaults and CHECK constraints otherwise follow the
+ * spec. The no_double_booking exclusion constraint and the `ends_at` trigger
+ * are in migrations/0001_booking_guard.sql (why they look the way they do)
+ * and 0002 (where they now live).
  */
 
 import { sql } from "drizzle-orm";
@@ -23,7 +26,57 @@ import {
   timestamp,
   unique,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+
+// ---------------------------------------------------------------------------
+// Vocabularies — the value lists behind the CHECK constraints below. They live
+// here, with no imports from the rest of the package, because drizzle-kit
+// loads this file by itself and can't follow our ESM `.js` imports. The Zod
+// schemas in ../service-settings.ts build on these.
+// ---------------------------------------------------------------------------
+
+/** How a service is delivered and sold. Read by the engine and agent — never the category id. */
+export const LOCATION_MODES = ["at_business", "at_customer", "pickup_delivery"] as const;
+export const PRICING_MODES = ["fixed", "from", "per_unit", "quote"] as const;
+export const CONFIRMATIONS = ["instant", "request"] as const;
+export const STEP_KINDS = ["visit", "pickup", "delivery", "job"] as const;
+
+export type LocationMode = (typeof LOCATION_MODES)[number];
+export type PricingMode = (typeof PRICING_MODES)[number];
+export type Confirmation = (typeof CONFIRMATIONS)[number];
+export type StepKind = (typeof STEP_KINDS)[number];
+
+/** One appointment a service needs. Step N+1 is searched from step N's end plus after_hours. */
+export type Step = { kind: StepKind; duration_min: number; after_hours?: number };
+
+/** Phase 1 uses only the instant, single-step path: confirmed → completed, or a cancellation. */
+export const ORDER_STATUSES = [
+  "requested",
+  "quoted",
+  "confirmed",
+  "in_progress",
+  "completed",
+  "declined",
+  "cancelled_by_user",
+  "cancelled_by_business",
+  "no_show",
+] as const;
+
+/** `held` is a requested order's appointment: it occupies the slot until the business decides. */
+export const APPOINTMENT_STATUSES = ["held", "confirmed", "completed", "cancelled", "no_show"] as const;
+
+/** Appointments in these states take part in the no_double_booking constraint. */
+export const SLOT_HOLDING_STATUSES = ["held", "confirmed", "completed"] as const;
+
+export const QUOTE_STATUSES = ["sent", "accepted", "declined", "expired"] as const;
+
+export const EVENT_ACTORS = ["user", "business", "system"] as const;
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+export type AppointmentStatus = (typeof APPOINTMENT_STATUSES)[number];
+export type QuoteStatus = (typeof QUOTE_STATUSES)[number];
+export type EventActor = (typeof EVENT_ACTORS)[number];
 
 /** timestamptz, as the spec uses everywhere for absolute times. */
 const tstz = (name: string) =>
@@ -37,6 +90,10 @@ const money = (name: string) => numeric(name, { precision: 10, scale: 2 });
 
 const createdAt = () => tstz("created_at").notNull().defaultNow();
 const updatedAt = () => tstz("updated_at").notNull().defaultNow();
+
+/** A CHECK that a column holds one of the given values, sharing the list with the Zod enums. */
+const oneOf = (column: AnyPgColumn, values: readonly string[]) =>
+  sql`${column} IN (${sql.raw(values.map((value) => `'${value}'`).join(", "))})`;
 
 // ---------------------------------------------------------------------------
 // People
@@ -101,20 +158,41 @@ export const categories = pgTable("categories", {
  * "Men's Cut" and another "Gents Haircut"; both map to a row here, so finding
  * everyone who does haircuts never means comparing free text.
  */
-export const canonicalServices = pgTable("canonical_services", {
-  id: text("id").primaryKey(), // 'mens_haircut'
-  categoryId: text("category_id")
-    .notNull()
-    .references(() => categories.id),
-  name: text("name").notNull(),
-  // Fed to the agent so it recognises "trim" or "hair cut" as the same thing.
-  aliases: text("aliases")
-    .array()
-    .notNull()
-    .default(sql`'{}'::text[]`),
-  typicalDurationMin: integer("typical_duration_min").notNull().default(30),
-  active: boolean("active").notNull().default(true),
-});
+export const canonicalServices = pgTable(
+  "canonical_services",
+  {
+    id: text("id").primaryKey(), // 'mens_haircut'
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => categories.id),
+    name: text("name").notNull(),
+    // Fed to the agent so it recognises "trim" or "hair cut" as the same thing.
+    aliases: text("aliases")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+
+    // Defaults for the four service settings (service-settings.ts). A business
+    // accepts them when it adds the service, or overrides them.
+    defaultLocationMode: text("default_location_mode").notNull().default("at_business"),
+    defaultPricingMode: text("default_pricing_mode").notNull().default("fixed"),
+    defaultUnitLabel: text("default_unit_label"),
+    defaultConfirmation: text("default_confirmation").notNull().default("instant"),
+    // The only place a duration lives: [{ kind, duration_min, after_hours? }].
+    defaultSteps: jsonb("default_steps").$type<Step[]>().notNull(),
+
+    active: boolean("active").notNull().default(true),
+  },
+  (t) => [
+    check("canonical_services_location_mode_check", oneOf(t.defaultLocationMode, LOCATION_MODES)),
+    check("canonical_services_pricing_mode_check", oneOf(t.defaultPricingMode, PRICING_MODES)),
+    check("canonical_services_confirmation_check", oneOf(t.defaultConfirmation, CONFIRMATIONS)),
+    check(
+      "canonical_services_unit_label_check",
+      sql`(${t.defaultPricingMode} = 'per_unit') = (${t.defaultUnitLabel} IS NOT NULL)`,
+    ),
+  ],
+);
 
 // ---------------------------------------------------------------------------
 // Businesses
@@ -185,7 +263,11 @@ export const businessMembers = pgTable(
   ],
 );
 
-/** What one business offers and charges. No active row here = never found. */
+/**
+ * What one business offers, how, and at what price. No active row here =
+ * never found. The four settings decide how the engine and agent treat the
+ * service; the category id is never consulted for that.
+ */
 export const businessServices = pgTable(
   "business_services",
   {
@@ -197,17 +279,40 @@ export const businessServices = pgTable(
       .notNull()
       .references(() => canonicalServices.id),
     displayName: text("display_name").notNull(),
-    priceAed: money("price_aed").notNull(),
-    durationMin: integer("duration_min").notNull(),
+
+    locationMode: text("location_mode").notNull().default("at_business"),
+    pricingMode: text("pricing_mode").notNull().default("fixed"),
+    // Only for per_unit: 'kg', 'item', ...
+    unitLabel: text("unit_label"),
+    confirmation: text("confirmation").notNull().default("instant"),
+    // The only place a duration lives; single-step = one element.
+    steps: jsonb("steps").$type<Step[]>().notNull(),
+
+    // fixed: the price. from: the minimum. per_unit: per unit_label.
+    // quote: NULL, or a visit fee.
+    priceAed: money("price_aed"),
     active: boolean("active").notNull().default(true),
   },
   (t) => [
-    unique("business_services_business_service_key").on(
+    // The same service can be offered at the shop and at home as two rows.
+    unique("business_services_business_service_location_key").on(
       t.businessId,
       t.canonicalServiceId,
+      t.locationMode,
     ),
     // The §5 Step 1 JOIN pivots on this.
     index("business_services_canonical_idx").on(t.canonicalServiceId),
+    check("business_services_location_mode_check", oneOf(t.locationMode, LOCATION_MODES)),
+    check("business_services_pricing_mode_check", oneOf(t.pricingMode, PRICING_MODES)),
+    check("business_services_confirmation_check", oneOf(t.confirmation, CONFIRMATIONS)),
+    check(
+      "business_services_price_check",
+      sql`${t.priceAed} IS NOT NULL OR ${t.pricingMode} = 'quote'`,
+    ),
+    check(
+      "business_services_unit_label_check",
+      sql`(${t.pricingMode} = 'per_unit') = (${t.unitLabel} IS NOT NULL)`,
+    ),
   ],
 );
 
@@ -380,6 +485,9 @@ export const searches = pgTable(
     windowEnd: tstz("window_end").notNull(),
     lat: coord("lat").notNull(),
     lng: coord("lng").notNull(),
+    // Where the work happens, for an at_customer service; copied onto the
+    // order at booking. The agent defaults it to the user's home address.
+    address: text("address"),
     constraints: jsonb("constraints")
       .notNull()
       .default(sql`'{}'::jsonb`),
@@ -418,7 +526,8 @@ export const searchOptions = pgTable(
       .references(() => businessServices.id),
     rank: integer("rank").notNull(), // 1..5, the position we showed
     rankScore: numeric("rank_score", { precision: 6, scale: 4 }).notNull(),
-    priceAed: money("price_aed").notNull(),
+    // NULL for a quote-priced service.
+    priceAed: money("price_aed"),
     distanceKm: numeric("distance_km", { precision: 6, scale: 2 }).notNull(),
     // Up to 3 free times, spread across the window.
     offeredSlots: timestamp("offered_slots", {
@@ -434,12 +543,12 @@ export const searchOptions = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// Bookings
+// Orders — what and who; appointments — when
 // ---------------------------------------------------------------------------
 
-/** A confirmed appointment. */
-export const bookings = pgTable(
-  "bookings",
+/** One job a user has asked a business for. */
+export const orders = pgTable(
+  "orders",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     searchId: uuid("search_id").references(() => searches.id),
@@ -452,39 +561,147 @@ export const bookings = pgTable(
     businessServiceId: uuid("business_service_id")
       .notNull()
       .references(() => businessServices.id),
+    // Set explicitly by the code that creates the order: 'confirmed' for an
+    // instant service, 'requested' for one the business must approve.
+    status: text("status").notNull(),
+
+    // Where the work happens, when it isn't at the business.
+    serviceAddress: text("service_address"),
+    serviceLat: coord("service_lat"),
+    serviceLng: coord("service_lng"),
+    // For per_unit pricing: how many unit_labels.
+    quantity: numeric("quantity", { precision: 10, scale: 2 }),
+    // Whatever the agent collected that has no column: notes, a description
+    // for a quote, the user's answers to optional request_schema fields.
+    details: jsonb("details")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+
+    // Copied at booking rather than read from business_services, so a later
+    // price rise leaves this order showing what was agreed. NULL until a
+    // quote is accepted; for per_unit it's the estimate.
+    priceAed: money("price_aed"),
+    // What was actually charged, set when the job is done.
+    finalPriceAed: money("final_price_aed"),
+
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    check("orders_status_check", oneOf(t.status, ORDER_STATUSES)),
+    check(
+      "orders_service_location_check",
+      sql`(${t.serviceLat} IS NULL) = (${t.serviceLng} IS NULL)`,
+    ),
+    index("orders_business_created_idx").on(t.businessId, t.createdAt),
+    index("orders_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+/**
+ * A block of a business's time. A single-step order has one; a laundry order
+ * has a pickup and a delivery. The no_double_booking exclusion constraint and
+ * the ends_at trigger live here (migration 0002).
+ */
+export const appointments = pgTable(
+  "appointments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    // Copied from the order: the exclusion constraint can only reference this
+    // table's own columns, and the calendar and availability queries go by it.
+    businessId: uuid("business_id")
+      .notNull()
+      .references(() => businesses.id),
+    // 'job' for a plain service; 'visit' for a quote's site visit.
+    kind: text("kind").notNull(),
     // Which chair or bay. Capacity 3 uses 0, 1, 2 — this is what lets three
     // people book 3pm without clashing.
     resourceIndex: integer("resource_index").notNull().default(0),
     scheduledAt: tstz("scheduled_at").notNull(),
     durationMin: integer("duration_min").notNull(),
 
-    // Copied from the business at booking time, like price_aed below: a
+    // Copied from the business at booking time, like price_aed on the order: a
     // business widening its buffer tomorrow must not retroactively invalidate
-    // bookings already made. The exclusion constraint reads it.
+    // appointments already made. The exclusion constraint reads it.
     bufferMin: integer("buffer_min").notNull().default(0),
 
-    // Derived, and owned entirely by the bookings_ends_at trigger — never set
-    // this from application code. The default only exists so inserts need not
-    // mention it; the BEFORE trigger overwrites it on every insert and update.
-    // See migrations/0001_booking_guard.sql.
+    // Derived, and owned entirely by the appointments_ends_at trigger — never
+    // set this from application code. The default only exists so inserts need
+    // not mention it; the BEFORE trigger overwrites it on every insert and
+    // update. See migrations/0001_booking_guard.sql for why.
     endsAt: tstz("ends_at").notNull().defaultNow(),
 
-    // Copied rather than read from business_services, so a later price rise
-    // leaves this booking showing what was agreed.
-    priceAed: money("price_aed").notNull(),
-    status: text("status").notNull().default("confirmed"),
-    cancelledReason: text("cancelled_reason"),
+    // 'held' while the order is still 'requested'; it occupies the slot.
+    status: text("status").notNull(),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (t) => [
-    check(
-      "bookings_status_check",
-      sql`${t.status} IN ('confirmed','completed','cancelled_by_user','cancelled_by_business','no_show')`,
-    ),
-    // The §5 Step 2 batch fetch scans by business over a time window.
-    index("bookings_business_scheduled_idx").on(t.businessId, t.scheduledAt),
-    index("bookings_user_scheduled_idx").on(t.userId, t.scheduledAt),
+    check("appointments_kind_check", oneOf(t.kind, STEP_KINDS)),
+    check("appointments_status_check", oneOf(t.status, APPOINTMENT_STATUSES)),
+    check("appointments_resource_index_check", sql`${t.resourceIndex} >= 0`),
+    // The §5 Step 2 batch fetch and the calendar scan by business over a window.
+    index("appointments_business_scheduled_idx").on(t.businessId, t.scheduledAt),
+    index("appointments_order_idx").on(t.orderId),
+  ],
+);
+
+/** A business's price for a quote-mode order, after the site visit. */
+export const quotes = pgTable(
+  "quotes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    amountAed: money("amount_aed").notNull(),
+    // How long the job will take, so its appointment can be booked.
+    estDurationMin: integer("est_duration_min").notNull(),
+    lineItems: jsonb("line_items")
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    validUntil: tstz("valid_until").notNull(),
+    status: text("status").notNull().default("sent"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("quotes_status_check", oneOf(t.status, QUOTE_STATUSES)),
+    index("quotes_order_idx").on(t.orderId),
+  ],
+);
+
+/**
+ * Everything that happened to an order, and the only source of notifications:
+ * the worker delivers each event (push to the business, assistant message to
+ * the user) and sets delivered_at.
+ */
+export const orderEvents = pgTable(
+  "order_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    actor: text("actor").notNull(),
+    // 'order.confirmed', 'order.cancelled_by_business', ...
+    type: text("type").notNull(),
+    // e.g. { reason } for a cancellation.
+    payload: jsonb("payload")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    deliveredAt: tstz("delivered_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    check("order_events_actor_check", oneOf(t.actor, EVENT_ACTORS)),
+    index("order_events_order_created_idx").on(t.orderId, t.createdAt),
+    // The worker's safety-net sweep for anything a lost job left undelivered.
+    index("order_events_undelivered_idx")
+      .on(t.createdAt)
+      .where(sql`${t.deliveredAt} IS NULL`),
   ],
 );
 

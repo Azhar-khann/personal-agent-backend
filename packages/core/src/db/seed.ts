@@ -10,9 +10,10 @@
 
 import { sql } from "drizzle-orm";
 
+import { singleStep } from "../service-settings.js";
 import { getDb, closeDb } from "./client.js";
 import { canonicalServices, categories, admins, users } from "./schema.js";
-import { CANONICAL_SERVICES, CATEGORIES } from "./seed-data.js";
+import { CANONICAL_SERVICES, CATEGORIES, CATEGORY_SERVICE_DEFAULTS } from "./seed-data.js";
 
 async function seed(): Promise<void> {
   const db = getDb();
@@ -53,14 +54,22 @@ async function seed(): Promise<void> {
   await db
     .insert(canonicalServices)
     .values(
-      CANONICAL_SERVICES.map((s) => ({
-        id: s.id,
-        categoryId: s.categoryId,
-        name: s.name,
-        aliases: s.aliases,
-        typicalDurationMin: s.typicalDurationMin,
-        active: true,
-      })),
+      CANONICAL_SERVICES.map((s) => {
+        const defaults = CATEGORY_SERVICE_DEFAULTS[s.categoryId];
+        if (!defaults) throw new Error(`no service defaults for category '${s.categoryId}'`);
+        return {
+          id: s.id,
+          categoryId: s.categoryId,
+          name: s.name,
+          aliases: s.aliases,
+          defaultLocationMode: s.locationMode ?? defaults.locationMode,
+          defaultPricingMode: s.pricingMode ?? defaults.pricingMode,
+          defaultUnitLabel: s.unitLabel ?? null,
+          defaultConfirmation: s.confirmation ?? "instant",
+          defaultSteps: singleStep(s.durationMin),
+          active: true,
+        };
+      }),
     )
     .onConflictDoUpdate({
       target: canonicalServices.id,
@@ -68,7 +77,11 @@ async function seed(): Promise<void> {
         categoryId: sql`excluded.category_id`,
         name: sql`excluded.name`,
         aliases: sql`excluded.aliases`,
-        typicalDurationMin: sql`excluded.typical_duration_min`,
+        defaultLocationMode: sql`excluded.default_location_mode`,
+        defaultPricingMode: sql`excluded.default_pricing_mode`,
+        defaultUnitLabel: sql`excluded.default_unit_label`,
+        defaultConfirmation: sql`excluded.default_confirmation`,
+        defaultSteps: sql`excluded.default_steps`,
       },
     });
   console.log(`seeded ${CANONICAL_SERVICES.length} canonical services`);

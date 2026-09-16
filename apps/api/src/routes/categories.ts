@@ -54,7 +54,11 @@ categoriesRouter.get("/:id/services", async (req, res) => {
     .select({
       id: canonicalServices.id,
       name: canonicalServices.name,
-      typicalDurationMin: canonicalServices.typicalDurationMin,
+      locationMode: canonicalServices.defaultLocationMode,
+      pricingMode: canonicalServices.defaultPricingMode,
+      unitLabel: canonicalServices.defaultUnitLabel,
+      confirmation: canonicalServices.defaultConfirmation,
+      steps: canonicalServices.defaultSteps,
     })
     .from(canonicalServices)
     .where(
@@ -65,5 +69,17 @@ categoriesRouter.get("/:id/services", async (req, res) => {
     )
     .orderBy(asc(canonicalServices.name));
 
-  res.json({ categoryId: category.id, services });
+  res.json({
+    categoryId: category.id,
+    services: services.map(({ id, name, steps, ...settings }) => ({
+      id,
+      name,
+      // What a business gets when it adds the service without overriding.
+      defaults: {
+        ...settings,
+        durationMin: steps.length === 1 ? steps[0]!.duration_min : null,
+        steps,
+      },
+    })),
+  });
 });

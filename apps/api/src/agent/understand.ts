@@ -103,7 +103,7 @@ Rules:
 - choice_number: when the assistant's last message offered numbered choices and the user picks one, by number or by describing it ("the Al Barsha one"). Then leave business_name and category_id null.
 - location: "at_customer" when the user wants the work done at their place or things collected from there, "at_business" when they'll go to the business or drop things off, null when unsaid. address: only an address the user states for where the work happens or where to collect from — not a place they're moving to.
 - budget_max_aed: the most the user said they'll pay, in AED. notes: any other instruction for the business, e.g. "call when you're outside" or "the building has no parking", or a description of the job when the assistant asked for one.
-- quantity: how many of a service's unit the user states, e.g. 8 for "about 8 kg of laundry" or 5 for "five shirts to dry clean". Only for services priced per unit.
+- quantity: only for a service marked "(per kg)" or "(per item)" in the catalogue: how many kg or items the user states, e.g. 8 for "about 8 kg of laundry". Never a price or budget, and never a count of people, rooms or appliances. Otherwise null.
 - details: answers to the category's optional details, as key/value pairs.
 - option_number and option_time: the option's number and the chosen offered time, copied exactly from the options on screen.
 - order_number: the upcoming booking's number, when it's clear which one.
@@ -247,12 +247,29 @@ export type UnderstandResult = {
   usage: TokenUsage | null;
 };
 
+/**
+ * Reads the model's JSON. Done here rather than with responses.parse: the SDK
+ * refuses any output holding -0, which the model sometimes writes for a
+ * number it means as none, and that turned a normal message into an error.
+ * withoutPlaceholders then treats -0 like 0.
+ */
+export function parseUnderstanding(text: string): Understanding | null {
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const parsed = Understanding.safeParse(json);
+  return parsed.success ? withoutPlaceholders(parsed.data) : null;
+}
+
 export async function understand(
   env: ModelConfig,
   catalogue: Catalogue,
   context: UnderstandContext,
 ): Promise<UnderstandResult> {
-  const response = await openai(env).responses.parse({
+  const response = await openai(env).responses.create({
     model: env.AGENT_MODEL,
     ...(usesReasoning(env.AGENT_MODEL) ? { reasoning: { effort: env.AGENT_REASONING_EFFORT } } : {}),
     input: [
@@ -262,11 +279,12 @@ export async function understand(
     text: { format: zodTextFormat(Understanding, "understanding") },
   });
 
-  if (!response.output_parsed) {
+  const understanding = parseUnderstanding(response.output_text);
+  if (!understanding) {
     throw new Error(`model returned no structured output (status ${response.status})`);
   }
   return {
-    understanding: withoutPlaceholders(response.output_parsed),
+    understanding,
     model: response.model,
     usage: response.usage
       ? {

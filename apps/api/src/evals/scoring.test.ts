@@ -85,15 +85,22 @@ describe("scoreSlots", () => {
     const scores = scoreSlots(
       { ...nothing, service_id: "manicure", budget_max_aed: 100, details: [{ key: "Gender_Preference", value: "Female " }] },
       { ...none, service_id: "manicure", location: "at_customer", budget_max_aed: 100, details: { gender_preference: "female" } },
+      catalogue,
     );
     expect(scores).toEqual({ service: true, window: true, location: false, address: true, budget: true, quantity: true, notes: true, details: true });
   });
 
   it("accepts any of a detail's listed values, and nothing invented", () => {
     const urgent = { ...none, details: { urgency: ["urgent", "emergency"] } };
-    expect(scoreSlots({ ...nothing, details: [{ key: "urgency", value: "Emergency" }] }, urgent).details).toBe(true);
-    expect(scoreSlots({ ...nothing, details: [{ key: "urgency", value: "soon" }] }, urgent).details).toBe(false);
-    expect(scoreSlots({ ...nothing, details: [{ key: "urgency", value: "high" }] }, none).details).toBe(false);
+    expect(scoreSlots({ ...nothing, details: [{ key: "urgency", value: "Emergency" }] }, urgent, catalogue).details).toBe(true);
+    expect(scoreSlots({ ...nothing, details: [{ key: "urgency", value: "soon" }] }, urgent, catalogue).details).toBe(false);
+    expect(scoreSlots({ ...nothing, details: [{ key: "urgency", value: "high" }] }, none, catalogue).details).toBe(false);
+  });
+
+  it("scores a quantity as the agent keeps it: only for a per-unit service", () => {
+    expect(scoreSlots({ ...nothing, service_id: "manicure", quantity: 150 }, { ...none, service_id: "manicure" }, catalogue).quantity).toBe(true);
+    expect(scoreSlots({ ...nothing, service_id: "wash_and_fold", quantity: 100 }, { ...none, service_id: "wash_and_fold" }, catalogue).quantity).toBe(false);
+    expect(scoreSlots({ ...nothing, service_id: "wash_and_fold", quantity: 8 }, { ...none, service_id: "wash_and_fold", quantity: 8 }, catalogue).quantity).toBe(true);
   });
 });
 

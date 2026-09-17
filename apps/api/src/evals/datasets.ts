@@ -45,8 +45,14 @@ export type Dataset = {
   title: string;
   /** How many examples the file holds. */
   size: number;
-  /** Score keys, each 0 or 1 per example; the gate compares every one. */
-  scoreKeys: string[];
+  /**
+   * The lowest acceptable share for each score key (each 0 or 1 per example).
+   * Set about two examples below the lowest score that luna's runs of an
+   * unchanged prompt have had, so chance doesn't fail a build but a real
+   * regression does — Stage 9's time parsing fell to 91%. Raise one on purpose
+   * when a change improves it. Runs so far are in the plan's Stage 9 notes.
+   */
+  minimums: Record<string, number>;
   /** Problems with the labels themselves — unknown ids, windows the agent would reject. */
   check(expected: unknown): string[];
   score(understanding: Understanding, expected: unknown): Record<string, boolean>;
@@ -76,7 +82,8 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
     title: "Category detection",
     // §11's 200, plus 15 for the categories added in Stage 9.
     size: 215,
-    scoreKeys: ["correct"],
+    // Runs: 93.5–95.8%.
+    minimums: { correct: 0.92 },
     check(value) {
       const expected = CategoryExpected.parse(value);
       if ("category" in expected) return unknownCategory(expected.category);
@@ -85,10 +92,12 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
     },
     score: (u, value) => ({ correct: scoreCategory(u, CategoryExpected.parse(value), catalogue) }),
     summary(rows) {
-      const pairs = rows.map(({ example, understanding }) => ({
-        expected: expectedCategoryLabel(CategoryExpected.parse(example.expected)),
-        got: categoryOutcome(understanding, catalogue),
-      }));
+      const pairs = rows.map(({ example, understanding }) => {
+        const expected = CategoryExpected.parse(example.expected);
+        // Asking with more choices than labelled is right, so it isn't a confusion.
+        const right = scoreCategory(understanding, expected, catalogue);
+        return { expected: expectedCategoryLabel(expected), got: right ? expectedCategoryLabel(expected) : categoryOutcome(understanding, catalogue) };
+      });
       const confusions = topConfusions(pairs, 8);
       return confusions.length === 0
         ? ["No confusions."]
@@ -99,9 +108,20 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
   const slots: Dataset = {
     key: "slots",
     title: "Slot extraction",
-    // §11's 150, plus 6 for the services added in Stage 9.
-    size: 156,
-    scoreKeys: ["service", "window", "location", "address", "budget", "quantity", "notes", "details"],
+    // §11's 150, plus 9 for the services added in Stage 9.
+    size: 159,
+    // Runs: service 98–100, window 99.4–100, location 92.5–96, address 97.3–100,
+    // budget 98–98.7, quantity 99.4 (one run), notes 91–95, details 90.7–93.1.
+    minimums: {
+      service: 0.96,
+      window: 0.98,
+      location: 0.91,
+      address: 0.96,
+      budget: 0.96,
+      quantity: 0.97,
+      notes: 0.89,
+      details: 0.89,
+    },
     check(value) {
       const expected = SlotExpected.parse(value);
       const service = catalogue.service(expected.service_id);
@@ -114,7 +134,7 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
         ),
       ];
     },
-    score: (u, value) => scoreSlots(u, SlotExpected.parse(value)),
+    score: (u, value) => scoreSlots(u, SlotExpected.parse(value), catalogue),
     summary: () => [],
   };
 
@@ -122,7 +142,8 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
     key: "time",
     title: "Time parsing",
     size: 100,
-    scoreKeys: ["exact", "near"],
+    // Runs: 94.9–99% for both.
+    minimums: { exact: 0.92, near: 0.92 },
     check(value) {
       return (wantedWindows(TimeExpected.parse(value)) ?? []).flatMap(windowProblems);
     },
@@ -145,7 +166,8 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
     key: "names",
     title: "Direct name resolution",
     size: 60,
-    scoreKeys: ["outcome", "named"],
+    // Runs: outcome 93.2–95, named 96.6–98.3. One example is 1.7 points here.
+    minimums: { outcome: 0.9, named: 0.93 },
     check(value) {
       const expected = NameExpected.parse(value);
       return expected.business && !directory.some((business) => business.id === expected.business)

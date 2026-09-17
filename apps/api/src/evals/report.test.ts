@@ -1,20 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { costPerThousand, drops, percentile, tooManyErrors, type DatasetRun } from "./report.js";
+import { belowMinimum, costPerThousand, percentile, tooManyErrors, type DatasetRun } from "./report.js";
 
-describe("drops", () => {
-  it("fails a score that fell more than 3 points, and nothing else", () => {
-    expect(drops({ correct: 0.88, service: 0.95 }, { correct: 0.92, service: 0.97 })).toEqual([
-      { key: "correct", points: expect.closeTo(4, 5) },
+describe("belowMinimum", () => {
+  it("fails a score under its minimum, and nothing else", () => {
+    expect(belowMinimum({ correct: 0.9, service: 0.99 }, { correct: 0.91, service: 0.96 })).toEqual([
+      { key: "correct", score: 0.9, minimum: 0.91 },
     ]);
   });
 
-  it("allows a drop of exactly 3 points", () => {
-    expect(drops({ exact: 0.87 }, { exact: 0.9 })).toEqual([]);
+  it("accepts a score exactly at its minimum, float division included", () => {
+    expect(belowMinimum({ exact: 92 / 100 }, { exact: 0.92 })).toEqual([]);
+    expect(belowMinimum({ exact: 0.1 + 0.82 }, { exact: 0.92 })).toEqual([]);
   });
 
-  it("ignores scores the baseline had but this run doesn't", () => {
-    expect(drops({}, { exact: 0.9 })).toEqual([]);
+  it("ignores scores with no minimum, or missing from the run", () => {
+    expect(belowMinimum({ other: 0 }, { exact: 0.9 })).toEqual([]);
   });
 });
 

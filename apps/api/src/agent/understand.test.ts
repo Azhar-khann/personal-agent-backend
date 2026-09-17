@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { choiceFromLabel, withoutPlaceholders, type Understanding } from "./understand.js";
+import { choiceFromLabel, parseUnderstanding, withoutPlaceholders, type Understanding } from "./understand.js";
 
 const nothing: Understanding = {
   intent: "request",
@@ -69,5 +69,17 @@ describe("choiceFromLabel", () => {
   it("refuses text that fits several labels, so the question is asked again", () => {
     expect(choiceFromLabel(branches, { ...nothing, business_name: "Kings Barbers" })).toBeNull();
     expect(choiceFromLabel(branches, nothing)).toBeNull();
+  });
+});
+
+describe("parseUnderstanding", () => {
+  it("reads -0 as not given — the SDK's own parser threw on it", () => {
+    const parsed = parseUnderstanding(JSON.stringify({ ...nothing, budget_max_aed: 0 }).replace('"budget_max_aed":0', '"budget_max_aed":-0'));
+    expect(parsed).toEqual(nothing);
+  });
+
+  it("is null for output that isn't the schema", () => {
+    expect(parseUnderstanding("not json")).toBeNull();
+    expect(parseUnderstanding(JSON.stringify({ intent: "request" }))).toBeNull();
   });
 });

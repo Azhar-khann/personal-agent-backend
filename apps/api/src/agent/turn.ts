@@ -96,6 +96,9 @@ async function abandon(searchId: string, now: Date): Promise<void> {
 
 // --- request: gather what's needed, one question at a time, then search -----
 
+export const isPerUnit = (catalogue: Catalogue, serviceId: string | null) =>
+  catalogue.service(serviceId)?.defaultPricingMode === "per_unit";
+
 /**
  * The location modes that fit what the user said. "Come to me" fits a business
  * that comes to the customer or collects from them.
@@ -151,7 +154,9 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
   if (u.location) s.locationMode = u.location;
   if (u.address) s.address = u.address;
   if (u.budget_max_aed !== null) s.budgetMaxAed = u.budget_max_aed;
-  if (u.quantity !== null) s.quantity = u.quantity;
+  // Only a per-unit service has a quantity. The model sometimes gives one anyway
+  // — a budget, a number of rooms — so it's kept only while it could apply.
+  if (u.quantity !== null && (s.serviceId === null || isPerUnit(catalogue, s.serviceId))) s.quantity = u.quantity;
   if (u.notes) s.notes = u.notes;
   for (const { key, value } of u.details) s.details[key] = value;
 
@@ -264,7 +269,7 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
     constraints: {
       ...s.details,
       ...(s.budgetMaxAed === null ? {} : { budget_max: s.budgetMaxAed }),
-      ...(s.quantity === null ? {} : { quantity: s.quantity }),
+      ...(s.quantity === null || !isPerUnit(catalogue, chosenService.id) ? {} : { quantity: s.quantity }),
       ...(s.notes ? { notes: s.notes } : {}),
       // Completing the booking moves this reminder's due date on.
       ...(s.reminderId ? { reminder_id: s.reminderId } : {}),

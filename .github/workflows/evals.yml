@@ -1,5 +1,5 @@
-# §11: a change to the prompt or what feeds it runs the eval datasets, and the
-# build fails if any score drops more than 3 points against the last run on main.
+# A change to the prompt or what feeds it runs the eval datasets, and the build
+# fails if any score falls below its minimum (apps/api/src/evals/datasets.ts).
 # Run by hand with a list of models for the quality-against-cost table.
 name: Evals
 

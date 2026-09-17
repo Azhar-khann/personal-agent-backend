@@ -156,7 +156,9 @@ export type SlotExpected = z.infer<typeof SlotExpected>;
 
 const normalized = (text: string) => text.trim().toLowerCase();
 
-export function scoreSlots(u: Understanding, expected: SlotExpected) {
+export function scoreSlots(u: Understanding, expected: SlotExpected, catalogue: Catalogue) {
+  // The agent keeps a quantity only for a per-unit service (turn.ts).
+  const quantity = catalogue.service(u.service_id)?.defaultPricingMode === "per_unit" ? u.quantity : null;
   const given = new Map(u.details.map(({ key, value }) => [normalized(key), normalized(value)]));
   const wanted = Object.entries(expected.details);
   return {
@@ -165,7 +167,7 @@ export function scoreSlots(u: Understanding, expected: SlotExpected) {
     location: u.location === expected.location,
     address: (u.address !== null) === expected.has_address,
     budget: u.budget_max_aed === expected.budget_max_aed,
-    quantity: u.quantity === expected.quantity,
+    quantity: quantity === expected.quantity,
     notes: (u.notes !== null) === expected.has_notes,
     details:
       given.size === wanted.length &&

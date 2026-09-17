@@ -23,7 +23,7 @@ import { costUsd, usesReasoning } from "../agent/models.js";
 import { understand, type Understanding, type UnderstandResult } from "../agent/understand.js";
 import { modelEnvSchema, type ModelConfig } from "../env.js";
 import { DATASET_KEYS, datasets, loadExamples, type Dataset, type Example, type LoadedExamples, type Scored } from "./datasets.js";
-import { drops, gateReport, sweepTable, tooManyErrors, type Baseline, type DatasetRun } from "./report.js";
+import { belowMinimum, gateReport, sweepTable, tooManyErrors, type Baseline, type DatasetRun } from "./report.js";
 import { EVAL_NOW, EVAL_TIME_ZONE } from "./scoring.js";
 
 const { values: args } = parseArgs({
@@ -230,15 +230,13 @@ async function runDataset(dataset: Dataset, loaded: LoadedExamples, model: strin
   const scores = Object.fromEntries([...totals].map(([key, total]) => [key, total / Math.max(scored.length, 1)]));
   // Kept on the experiment, where a later run finds its baseline. LangSmith's
   // own feedback_stats came back empty when listing experiments.
-  const project = await client.readProject({ projectName: results.experimentName });
-  await client.updateProject(project.id, {
-    projectExtra: { ...project.extra, metadata: { ...project.extra?.["metadata"], scores } },
-  });
-  await tag("experiment", project.id);
+  await addMetadata(results.experimentName, { scores });
+  await tag("experiment", (await client.readProject({ projectName: results.experimentName })).id);
 
   return {
     title: dataset.title,
-    scoreKeys: dataset.scoreKeys,
+    scoreKeys: Object.keys(dataset.minimums),
+    minimums: dataset.minimums,
     experiment: results.experimentName,
     model,
     scored: scored.length,
@@ -250,7 +248,19 @@ async function runDataset(dataset: Dataset, loaded: LoadedExamples, model: strin
   };
 }
 
-/** The latest CI run on main over the same examples: same dataset version, same limit. */
+/** Adds to an experiment's metadata, keeping what's there. */
+async function addMetadata(experiment: string, fields: Record<string, unknown>) {
+  const project = await client.readProject({ projectName: experiment });
+  await client.updateProject(project.id, {
+    projectExtra: { ...project.extra, metadata: { ...project.extra?.["metadata"], ...fields } },
+  });
+}
+
+/**
+ * The latest CI run on main over the same examples — same dataset version,
+ * same limit — whose build passed, shown for reference next to this run's
+ * scores. A failed build isn't shown as main: it never became main's state.
+ */
 async function mainBaseline(datasetName: string, current: string): Promise<Baseline | null> {
   const wanted = { kind: "gate", source: "ci", branch: "main", limit };
   let latest: (Baseline & { started: number }) | null = null;
@@ -259,8 +269,8 @@ async function mainBaseline(datasetName: string, current: string): Promise<Basel
     const metadata = (project.extra?.["metadata"] ?? {}) as Record<string, unknown>;
     const matches = Object.entries(wanted).every(([key, value]) => (metadata[key] ?? null) === value);
     const scores = z.record(z.number()).safeParse(metadata["scores"]);
-    // A run still going, or one that failed, has no scores yet.
-    if (!matches || project.name === current || !scores.success) continue;
+    // A run still going, or one that errored, has no scores or verdict yet.
+    if (!matches || project.name === current || !scores.success || metadata["passed"] !== true) continue;
 
     const started = new Date(project.start_time).getTime();
     if (!latest || started > latest.started) {
@@ -320,11 +330,13 @@ async function main(): Promise<number> {
       console.error(`${run.title}: ${run.errors} of ${run.scored + run.errors} calls errored — too many to judge.`);
       failed = true;
     }
-    for (const { key, points } of run.baseline ? drops(run.scores, run.baseline.scores) : []) {
-      console.error(`${run.title} · ${key} dropped ${points.toFixed(1)} points (limit ${3}).`);
+    for (const { key, score, minimum } of belowMinimum(run.scores, run.minimums)) {
+      console.error(`${run.title} · ${key} is ${(score * 100).toFixed(1)}%, below its minimum of ${(minimum * 100).toFixed(1)}%.`);
       failed = true;
     }
   }
+  // The build's verdict, on every experiment in it: only a passing build is shown as main.
+  for (const run of runs) await addMetadata(run.experiment, { passed: !failed });
   return failed ? 1 : 0;
 }
 

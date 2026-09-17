@@ -6,6 +6,9 @@
  * it quietly searches the wrong day.
  */
 
+/** Businesses are in the UAE (§ scope), so their times read in Dubai time. */
+export const BUSINESS_TIME_ZONE = "Asia/Dubai";
+
 const LOCAL = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 const MINUTE_MS = 60_000;
 /** §4: reject anything more than two weeks long. */
@@ -103,6 +106,13 @@ export function formatWindow(start: Date, end: Date, timeZone: string): string {
   return sameDay
     ? `${formatWhen(start, timeZone)}–${formatClock(end, timeZone)}`
     : `${formatDay(start, timeZone)} ${formatClock(start, timeZone)} – ${formatDay(end, timeZone)} ${formatClock(end, timeZone)}`;
+}
+
+/** A calendar date ("2026-10-12", as Postgres returns a date column) as "Mon 12 Oct". */
+export function formatDate(date: string): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(
+    new Date(`${date}T12:00:00Z`),
+  );
 }
 
 /** "Thursday 2026-09-17 15:04", for telling the model what "now" is. */

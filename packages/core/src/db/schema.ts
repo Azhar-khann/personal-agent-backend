@@ -647,6 +647,11 @@ export const appointments = pgTable(
     check("appointments_resource_index_check", sql`${t.resourceIndex} >= 0`),
     // The §5 Step 2 batch fetch and the calendar scan by business over a window.
     index("appointments_business_scheduled_idx").on(t.businessId, t.scheduledAt),
+    // The worker's minute sweeps look across all businesses for confirmed
+    // appointments by time — reminders ahead, completions behind.
+    index("appointments_confirmed_scheduled_idx")
+      .on(t.scheduledAt)
+      .where(sql`${t.status} = 'confirmed'`),
     index("appointments_order_idx").on(t.orderId),
   ],
 );

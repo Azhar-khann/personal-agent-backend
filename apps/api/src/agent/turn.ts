@@ -29,8 +29,8 @@ import {
   type UpcomingOrder,
 } from "./lookups.js";
 import * as say from "./replies.js";
-import { emptyState, loadState, saveState, type AgentState } from "./state.js";
-import { checkWindow, fromLocal, type WindowProblem } from "./time.js";
+import { emptyState, loadState, saveState, type AgentState } from "@personal-agent/core";
+import { checkWindow, fromLocal, type WindowProblem } from "@personal-agent/core";
 import { choiceFromLabel, understand, type Understanding } from "./understand.js";
 
 const { conversations, messages, searches } = schema;
@@ -223,7 +223,8 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
   const values = {
     categoryId: chosenCategory.id,
     canonicalServiceId: chosenService.id,
-    mode: s.businessId ? "direct" : "search",
+    // §3: 'reminder' when a nudge started it — the spec's reminder-to-booking metric.
+    mode: s.reminderId ? "reminder" : s.businessId ? "direct" : "search",
     namedBusinessId: s.businessId,
     windowStart: new Date(s.window!.start),
     windowEnd: new Date(s.window!.end),
@@ -235,6 +236,8 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
       ...s.details,
       ...(s.budgetMaxAed === null ? {} : { budget_max: s.budgetMaxAed }),
       ...(s.notes ? { notes: s.notes } : {}),
+      // Completing the booking moves this reminder's due date on.
+      ...(s.reminderId ? { reminder_id: s.reminderId } : {}),
     },
     updatedAt: now,
   };

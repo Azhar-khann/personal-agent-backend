@@ -1,4 +1,4 @@
-import { closeDb } from "@personal-agent/core";
+import { closeDb, closeQueue, getQueue } from "@personal-agent/core";
 import { pino } from "pino";
 
 import { createApp } from "./app.js";
@@ -8,6 +8,10 @@ const env = loadApiEnv();
 const logger = pino({ level: env.LOG_LEVEL });
 const app = createApp(env, logger);
 
+// Connect to Redis at boot, so the first booking's notification isn't the one
+// that waits for the connection.
+getQueue();
+
 const server = app.listen(env.PORT, (error) => {
   if (error) throw error;
   logger.info({ port: env.PORT }, "api listening");
@@ -16,7 +20,7 @@ const server = app.listen(env.PORT, (error) => {
 function shutdown(signal: NodeJS.Signals): void {
   logger.info({ signal }, "shutting down");
   server.close(() => {
-    void closeDb().finally(() => process.exit(0));
+    void Promise.allSettled([closeQueue(), closeDb()]).finally(() => process.exit(0));
   });
 }
 

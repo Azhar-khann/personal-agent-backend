@@ -66,7 +66,24 @@ export async function runSearch(searchId: string, now = new Date()): Promise<Fin
       throw new OrderError("invalid_status", `This search is ${locked?.status ?? "gone"}`);
     }
 
+    const previous = await tx
+      .select({ businessId: searchOptions.businessId })
+      .from(searchOptions)
+      .where(eq(searchOptions.searchId, searchId));
     await tx.delete(searchOptions).where(eq(searchOptions.searchId, searchId));
+
+    // times_shown counts searches whose current list includes a business — the
+    // definition stats.recompute rebuilds from search_options. So a refreshed
+    // list counts only businesses new to it, and takes back businesses dropped:
+    // someone dropped wasn't passed over in the list the user chose from.
+    const before = new Set(previous.map((row) => row.businessId));
+    const after = new Set(result.options.map((option) => option.businessId));
+    for (const businessId of after) {
+      if (!before.has(businessId)) await incrementStats(tx, businessId, ["timesShown"], now);
+    }
+    for (const businessId of before) {
+      if (!after.has(businessId)) await incrementStats(tx, businessId, ["timesShown"], now, -1);
+    }
 
     if (result.options.length > 0) {
       await tx.insert(searchOptions).values(
@@ -82,9 +99,6 @@ export async function runSearch(searchId: string, now = new Date()): Promise<Fin
           presentedAt: now,
         })),
       );
-      for (const option of result.options) {
-        await incrementStats(tx, option.businessId, ["timesShown"], now);
-      }
     }
 
     await tx

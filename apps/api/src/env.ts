@@ -7,6 +7,9 @@ const apiEnvSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
 
+  // Handed to staff browsers so they can subscribe to push; the worker holds the private key.
+  VAPID_PUBLIC_KEY: z.string().min(1),
+
   OPENAI_API_KEY: z.string().min(1),
   // The agent makes one structured model call per chat message. Overridable,
   // so the Stage 8 evals can compare models.

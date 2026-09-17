@@ -1,0 +1,1 @@
+CREATE INDEX "appointments_confirmed_scheduled_idx" ON "appointments" USING btree ("scheduled_at") WHERE "appointments"."status" = 'confirmed';

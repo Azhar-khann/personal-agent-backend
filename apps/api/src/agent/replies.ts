@@ -7,7 +7,7 @@
 import type { SearchView, SearchViewOption } from "../search-view.js";
 import type { CatalogueCategory } from "./catalogue.js";
 import type { NamedBusiness, UpcomingOrder } from "./lookups.js";
-import { formatClock, formatWhen, formatWindow, toLocal, type WindowProblem } from "./time.js";
+import { formatClock, formatWhen, formatWindow, toLocal, type WindowProblem } from "@personal-agent/core";
 
 function price(option: SearchViewOption): string {
   if (option.priceAed === null) return "price on quote";
@@ -122,7 +122,7 @@ export function doesNotOffer(businessName: string, serviceName: string, atCustom
 // --- picking and booking ------------------------------------------------------
 
 export function booked(option: SearchViewOption, slot: Date, timeZone: string, overlaps: boolean): string {
-  return `Booked: ${option.service.displayName} at ${option.business.name}, ${formatWhen(slot, timeZone)}, ${price(option)}.${overlaps ? " Heads up: you have another booking at that time." : ""}`;
+  return `Booked: ${option.service.displayName} with ${option.business.name}, ${formatWhen(slot, timeZone)}, ${price(option)}.${overlaps ? " Heads up: you have another booking at that time." : ""}`;
 }
 
 export function whichOption(view: SearchView): string {
@@ -155,7 +155,7 @@ export function nothingToPick(): string {
 // --- existing bookings ----------------------------------------------------------
 
 const describeOrder = (order: UpcomingOrder, timeZone: string) =>
-  `${order.service.displayName} at ${order.business.name}, ${formatWhen(order.appointments[0]!.scheduledAt, timeZone)}`;
+  `${order.service.displayName} with ${order.business.name}, ${formatWhen(order.appointments[0]!.scheduledAt, timeZone)}`;
 
 export function noBookings(): string {
   return "You don't have any upcoming bookings.";

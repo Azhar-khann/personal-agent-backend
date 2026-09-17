@@ -7,8 +7,8 @@ import type { ApiEnv } from "../env.js";
 import type { SearchViewOption } from "../search-view.js";
 import type { Catalogue } from "./catalogue.js";
 import type { UpcomingOrder } from "./lookups.js";
-import type { AgentState } from "./state.js";
-import { describeNow, formatWindow, toLocal } from "./time.js";
+import type { AgentState } from "@personal-agent/core";
+import { describeNow, formatWindow, toLocal } from "@personal-agent/core";
 
 /**
  * What one user message means, from a single structured model call.

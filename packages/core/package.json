@@ -18,8 +18,10 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "bullmq": "^6.3.6",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.3",
+    "ioredis": "^6.0.0",
     "langsmith": "^0.10.4",
     "postgres": "^3.4.5",
     "zod": "^3.24.1"

@@ -6,7 +6,6 @@ import {
   appointments,
   businesses,
   businessServices,
-  orderEvents,
   orders,
   searches,
   searchOptions,
@@ -21,7 +20,9 @@ import {
   lockBusiness,
   lockOrder,
   OrderError,
+  recordEvent,
   slotUnavailable,
+  withEvents,
 } from "./common.js";
 
 type Business = typeof businesses.$inferSelect;
@@ -105,7 +106,7 @@ export function bookOption(input: {
   const now = input.now ?? new Date();
 
   return withSlotGuard(() =>
-    getDb().transaction(async (tx) => {
+    withEvents((eventIds) => getDb().transaction(async (tx) => {
       // Locking the search makes a double tap book once: the second request
       // waits, then finds the search already booked.
       const [search] = await tx
@@ -156,8 +157,8 @@ export function bookOption(input: {
 
       const atCustomer = service.locationMode === "at_customer";
       // What the agent collected is for the business to read — except the
-      // budget, which only ranked the options.
-      const { budget_max: _budget, ...details } = search.constraints as Record<string, unknown>;
+      // budget, which only ranked the options, and our own reminder link.
+      const { budget_max: _budget, reminder_id: _reminder, ...details } = search.constraints as Record<string, unknown>;
 
       const [order] = await tx
         .insert(orders)
@@ -191,7 +192,7 @@ export function bookOption(input: {
         })
         .returning({ id: appointments.id });
 
-      await tx.insert(orderEvents).values({
+      await recordEvent(tx, eventIds, {
         orderId: order!.id,
         actor: "user",
         type: "order.confirmed",
@@ -218,7 +219,7 @@ export function bookOption(input: {
         );
 
       return { orderId: order!.id, overlappingOrderIds: overlapping.map((row) => row.orderId) };
-    }),
+    })),
   );
 }
 
@@ -286,7 +287,7 @@ export function rescheduleOrder(input: {
   const now = input.now ?? new Date();
 
   return withSlotGuard(() =>
-    getDb().transaction(async (tx) => {
+    withEvents((eventIds) => getDb().transaction(async (tx) => {
       const order = await lockOrder(tx, input.orderId, { userId: input.userId });
       const current = await movableAppointment(tx, order, now);
       const business = assertBookable(await lockBusiness(tx, order.businessId));
@@ -321,12 +322,12 @@ export function rescheduleOrder(input: {
         .returning({ id: appointments.id });
 
       await tx.update(orders).set({ updatedAt: now }).where(eq(orders.id, order.id));
-      await tx.insert(orderEvents).values({
+      await recordEvent(tx, eventIds, {
         orderId: order.id,
         actor: "user",
         type: "order.rescheduled",
         payload: { appointmentId: moved!.id, from: current.scheduledAt, to: input.slotAt },
       });
-    }),
+    })),
   );
 }

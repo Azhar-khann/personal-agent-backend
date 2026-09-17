@@ -81,7 +81,7 @@ function instructions(catalogue: Catalogue): string {
 Intents:
 - request: the user asks for a service, answers the assistant's question — including picking one of its numbered choices — or changes something about the current request. "Actually make it 4pm" changes the current request's time; it is not a new request.
 - select_option: the user picks one of the options on screen, e.g. "book the second one at 2:30". Not for the assistant's numbered choices.
-- manage_booking: the user wants to cancel or reschedule a booking listed under upcoming bookings. "Cancel my haircut" is manage_booking when a haircut is booked.
+- manage_booking: the user wants to cancel or reschedule a booking listed under upcoming bookings. "Cancel my AC service" or "cancel Friday's appointment" is manage_booking when such a booking exists.
 - stop: the user drops a request that hasn't been booked, e.g. "never mind".
 - other: anything else. Put a reply of one or two sentences in "reply" and steer back to booking; you are not a general assistant.
 
@@ -95,7 +95,7 @@ Rules:
 - business_name: only when the user names a specific business.
 - choice_number: when the assistant's last message offered numbered choices and the user picks one, by number or by describing it ("the Al Barsha one"). Then leave business_name and category_id null.
 - location: "at_customer" when the user wants the work done at their place, "at_business" when they'll go to the business, null when unsaid. address: only an address the user states.
-- budget_max_aed: the most the user said they'll pay, in AED. notes: any other instruction for the business, e.g. "no clippers".
+- budget_max_aed: the most the user said they'll pay, in AED. notes: any other instruction for the business, e.g. "call when you're outside" or "the building has no parking".
 - details: answers to the category's optional details, as key/value pairs.
 - option_number and option_time: the option's number and the chosen offered time, copied exactly from the options on screen.
 - order_number: the upcoming booking's number, when it's clear which one.

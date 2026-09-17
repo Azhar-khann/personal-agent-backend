@@ -154,14 +154,14 @@ export const categories = pgTable("categories", {
 });
 
 /**
- * A shared service vocabulary, one set per category. One barber writes
- * "Men's Cut" and another "Gents Haircut"; both map to a row here, so finding
- * everyone who does haircuts never means comparing free text.
+ * A shared service vocabulary, one set per category. One business lists
+ * "Leak Fix" and another "Pipe Leak Repair"; both map to a row here, so
+ * finding everyone who offers a service never means comparing free text.
  */
 export const canonicalServices = pgTable(
   "canonical_services",
   {
-    id: text("id").primaryKey(), // 'mens_haircut'
+    id: text("id").primaryKey(), // 'leak_repair'
     categoryId: text("category_id")
       .notNull()
       .references(() => categories.id),

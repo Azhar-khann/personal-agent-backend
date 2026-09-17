@@ -1,4 +1,4 @@
-import { getDb, schema } from "@personal-agent/core";
+import { comparablePrice, constraintNumber, getDb, schema, type PricingMode } from "@personal-agent/core";
 import { and, asc, eq } from "drizzle-orm";
 
 import { HttpError } from "./http.js";
@@ -23,6 +23,8 @@ export async function searchView(searchId: string, userId: string) {
         displayName: businessServices.displayName,
         locationMode: businessServices.locationMode,
         pricingMode: businessServices.pricingMode,
+        unitLabel: businessServices.unitLabel,
+        confirmation: businessServices.confirmation,
         steps: businessServices.steps,
       },
     })
@@ -32,11 +34,15 @@ export async function searchView(searchId: string, userId: string) {
     .where(eq(searchOptions.searchId, search.id))
     .orderBy(asc(searchOptions.rank));
 
+  const quantity = constraintNumber(search.constraints, "quantity");
+
   return {
     search: {
       id: search.id,
       status: search.status,
       mode: search.mode,
+      locationMode: search.locationMode,
+      quantity,
       categoryId: search.categoryId,
       canonicalServiceId: search.canonicalServiceId,
       namedBusinessId: search.namedBusinessId,
@@ -53,12 +59,24 @@ export async function searchView(searchId: string, userId: string) {
       service: {
         displayName: service.displayName,
         locationMode: service.locationMode,
-        pricingMode: service.pricingMode,
-        durationMin: service.steps[0]?.duration_min ?? null,
+        pricingMode: service.pricingMode as PricingMode,
+        unitLabel: service.unitLabel,
+        // request: the business confirms before it's booked.
+        confirmation: service.confirmation,
+        // Each step's kind and length: a job, a site visit, or a pickup and a delivery.
+        steps: service.steps,
       },
+      // The price, the minimum, the unit price, or a quote's visit fee.
       priceAed: option.priceAed === null ? null : Number(option.priceAed),
+      // A per-unit price times the quantity, when the user gave one.
+      estimateAed:
+        service.pricingMode === "per_unit"
+          ? comparablePrice("per_unit", option.priceAed === null ? null : Number(option.priceAed), quantity)
+          : null,
       distanceKm: Number(option.distanceKm),
       offeredSlots: option.offeredSlots,
+      // For each offered slot, the later steps' times (e.g. the delivery).
+      laterSlots: option.laterSlots?.map((times) => times.map((time) => new Date(time))) ?? null,
       selected: option.selectedAt !== null,
     })),
   };

@@ -43,7 +43,7 @@ export type Scored = { example: Example; understanding: Understanding };
 export type Dataset = {
   key: DatasetKey;
   title: string;
-  /** §11's size. */
+  /** How many examples the file holds. */
   size: number;
   /** Score keys, each 0 or 1 per example; the gate compares every one. */
   scoreKeys: string[];
@@ -74,7 +74,8 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
   const category: Dataset = {
     key: "category",
     title: "Category detection",
-    size: 200,
+    // §11's 200, plus 15 for the categories added in Stage 9.
+    size: 215,
     scoreKeys: ["correct"],
     check(value) {
       const expected = CategoryExpected.parse(value);
@@ -98,8 +99,9 @@ export function datasets(catalogue: Catalogue, directory = readDirectory()): Dat
   const slots: Dataset = {
     key: "slots",
     title: "Slot extraction",
-    size: 150,
-    scoreKeys: ["service", "window", "location", "address", "budget", "notes", "details"],
+    // §11's 150, plus 6 for the services added in Stage 9.
+    size: 156,
+    scoreKeys: ["service", "window", "location", "address", "budget", "quantity", "notes", "details"],
     check(value) {
       const expected = SlotExpected.parse(value);
       const service = catalogue.service(expected.service_id);

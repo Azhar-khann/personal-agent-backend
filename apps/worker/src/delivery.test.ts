@@ -14,6 +14,14 @@ const facts: EventFacts = {
   serviceAddress: "Villa 7, Jumeirah",
   reason: "technician unwell",
   userTimeZone: "Asia/Kolkata",
+  appointmentKind: "job",
+  holdExpiresAt: null,
+  needsApproval: false,
+  amountAed: null,
+  estDurationMin: null,
+  validUntil: null,
+  quantity: null,
+  unitLabel: null,
 };
 
 describe("deliveryFor", () => {
@@ -50,6 +58,44 @@ describe("deliveryFor", () => {
     );
     expect(deliveryFor("appointment.reminder", { ...facts, serviceAddress: null }).message).toBe(
       "Reminder: AC Servicing with CoolAir Services, Mon 7 Jan, 13:30.",
+    );
+  });
+
+  it("asks the business to answer a request by its deadline", () => {
+    expect(deliveryFor("order.requested", { ...facts, holdExpiresAt: new Date("2030-01-07T06:00:00Z") }).push).toEqual({
+      title: "New request",
+      body: "AC Servicing, Mon 7 Jan, 12:00 — Sara. Accept or decline by Mon 7 Jan, 10:00",
+    });
+    expect(deliveryFor("order.requested", { ...facts, appointmentKind: "visit" }).push?.title).toBe("New quote request");
+  });
+
+  it("tells the user a request lapsed, and the business too, and offers to rebook", () => {
+    const delivery = deliveryFor("order.expired", facts);
+    expect(delivery.message).toBe(
+      "CoolAir Services didn't confirm your AC Servicing request in time, so it's been released. Want me to find somewhere else?",
+    );
+    expect(delivery.push?.title).toBe("Request expired");
+    expect(delivery.offerRebooking).toBe(true);
+  });
+
+  it("sends the user a quote to accept", () => {
+    expect(
+      deliveryFor("quote.sent", { ...facts, amountAed: 1200, estDurationMin: 240, validUntil: new Date("2030-01-14T08:00:00Z") }).message,
+    ).toBe("CoolAir Services quoted AED 1200 for AC Servicing, about 4 hours of work, valid until Mon 14 Jan, 13:30. Open the booking to accept it and pick a time.");
+  });
+
+  it("names the step: a pickup, a delivery or a visit", () => {
+    expect(deliveryFor("appointment.reminder", { ...facts, appointmentKind: "pickup" }).message).toBe(
+      "Reminder: CoolAir Services collects your AC Servicing Mon 7 Jan, 13:30, at Villa 7, Jumeirah.",
+    );
+    expect(deliveryFor("order.confirmed", { ...facts, appointmentKind: "pickup" }).push?.body).toBe(
+      "AC Servicing pickup, Mon 7 Jan, 12:00 — Sara",
+    );
+  });
+
+  it("tells the user the final price, with the quantity", () => {
+    expect(deliveryFor("order.final_price", { ...facts, amountAed: 58.8, quantity: 8.4, unitLabel: "kg" }).message).toBe(
+      "CoolAir Services set the final price for your AC Servicing: AED 58.8 for 8.4 kg.",
     );
   });
 

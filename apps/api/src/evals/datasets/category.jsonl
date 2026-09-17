@@ -184,13 +184,13 @@
 {"id": "category-184", "message": "table for two at a restaurant tonight", "expected": {"unsupported": true}}
 {"id": "category-185", "message": "house cleaning maid for 4 hours", "expected": {"unsupported": true}, "note": "No cleaning category."}
 {"id": "category-186", "message": "pest control for cockroaches", "expected": {"unsupported": true}}
-{"id": "category-187", "message": "electrician to rewire the kitchen", "expected": {"unsupported": true}, "note": "No electrical category; handyman's hints say to prefer a specific category for electrical work."}
+{"id": "category-187", "message": "electrician to rewire the kitchen", "expected": {"category": "electrician"}}
 {"id": "category-188", "message": "vet appointment for my cat", "expected": {"unsupported": true}}
 {"id": "category-189", "message": "see a GP about a fever", "expected": {"unsupported": true}}
 {"id": "category-190", "message": "physiotherapy for back pain", "expected": {"unsupported": true}}
 {"id": "category-191", "message": "personal trainer at the gym", "expected": {"unsupported": true}}
-{"id": "category-192", "message": "laundry pickup", "expected": {"unsupported": true}, "note": "Laundry is a Stage 9 pickup/delivery example, not in the catalogue yet."}
-{"id": "category-193", "message": "movers for a 2 bedroom apartment", "expected": {"unsupported": true}}
+{"id": "category-192", "message": "laundry pickup", "expected": {"category": "laundry"}}
+{"id": "category-193", "message": "movers for a 2 bedroom apartment", "expected": {"category": "movers"}}
 {"id": "category-194", "message": "maths tutor for my son", "expected": {"unsupported": true}}
 {"id": "category-195", "message": "wedding photographer", "expected": {"unsupported": true}}
 {"id": "category-196", "message": "rent a car for the weekend", "expected": {"unsupported": true}}
@@ -198,3 +198,18 @@
 {"id": "category-198", "message": "my washing machine won't spin", "expected": {"unsupported": true}, "note": "Appliance repair isn't in the catalogue."}
 {"id": "category-199", "message": "eye test for new glasses", "expected": {"unsupported": true}}
 {"id": "category-200", "message": "dog grooming", "expected": {"unsupported": true}, "note": "Not the barber."}
+{"id": "category-201", "message": "wash and fold 8 kg, pick up tomorrow", "expected": {"category": "laundry"}}
+{"id": "category-202", "message": "dry cleaning for 3 suits", "expected": {"category": "laundry"}}
+{"id": "category-203", "message": "someone to collect my ironing", "expected": {"category": "laundry"}}
+{"id": "category-204", "message": "laundry service that picks up from my building", "expected": {"category": "laundry"}}
+{"id": "category-205", "message": "iron 20 shirts for the week", "expected": {"category": "laundry"}}
+{"id": "category-206", "message": "the power keeps tripping in the kitchen", "expected": {"category": "electrician"}}
+{"id": "category-207", "message": "install a chandelier in the living room", "expected": {"category": "electrician"}}
+{"id": "category-208", "message": "need a new socket next to the bed", "expected": {"category": "electrician"}}
+{"id": "category-209", "message": "lights flickering all over the flat", "expected": {"category": "electrician"}}
+{"id": "category-210", "message": "sparks came out of a light switch", "expected": {"category": "electrician"}}
+{"id": "category-211", "message": "moving from JLT to Mirdif next week", "expected": {"category": "movers"}}
+{"id": "category-212", "message": "shift my office to Business Bay", "expected": {"category": "movers"}}
+{"id": "category-213", "message": "move a piano to my new villa", "expected": {"category": "movers"}}
+{"id": "category-214", "message": "need a moving company", "expected": {"category": "movers"}}
+{"id": "category-215", "message": "relocating a 3 bedroom villa", "expected": {"category": "movers"}}

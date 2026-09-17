@@ -148,6 +148,8 @@ export const SlotExpected = z
      * that count as right, e.g. { "urgency": ["urgent", "emergency"] }.
      */
     details: z.record(z.union([z.string(), z.array(z.string()).min(1)])),
+    /** How many units, for a service priced per unit; null for anything else. */
+    quantity: z.number().nullable().default(null),
   })
   .strict();
 export type SlotExpected = z.infer<typeof SlotExpected>;
@@ -163,6 +165,7 @@ export function scoreSlots(u: Understanding, expected: SlotExpected) {
     location: u.location === expected.location,
     address: (u.address !== null) === expected.has_address,
     budget: u.budget_max_aed === expected.budget_max_aed,
+    quantity: u.quantity === expected.quantity,
     notes: (u.notes !== null) === expected.has_notes,
     details:
       given.size === wanted.length &&

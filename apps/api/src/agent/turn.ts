@@ -96,6 +96,21 @@ async function abandon(searchId: string, now: Date): Promise<void> {
 
 // --- request: gather what's needed, one question at a time, then search -----
 
+/**
+ * The location modes that fit what the user said. "Come to me" fits a business
+ * that comes to the customer or collects from them.
+ */
+function locationModesFor(said: "at_business" | "at_customer"): LocationMode[] {
+  return said === "at_business" ? ["at_business"] : ["at_customer", "pickup_delivery"];
+}
+
+/** The mode to search: the service's default when it fits what the user said, else the first that does. */
+function resolveLocationMode(said: "at_business" | "at_customer" | null, fallback: LocationMode): LocationMode {
+  if (!said) return fallback;
+  const fits = locationModesFor(said);
+  return fits.includes(fallback) ? fallback : fits[0]!;
+}
+
 async function request(turn: Turn, u: Understanding): Promise<Outcome> {
   const { catalogue, now, timeZone, user } = turn;
   const pending = turn.state.pendingChoice;
@@ -136,6 +151,7 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
   if (u.location) s.locationMode = u.location;
   if (u.address) s.address = u.address;
   if (u.budget_max_aed !== null) s.budgetMaxAed = u.budget_max_aed;
+  if (u.quantity !== null) s.quantity = u.quantity;
   if (u.notes) s.notes = u.notes;
   for (const { key, value } of u.details) s.details[key] = value;
 
@@ -196,16 +212,28 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
 
   const chosenService = catalogue.service(s.serviceId)!;
 
+  // What the service's settings need, asked once each and never blocking: a
+  // rough quantity for per-unit pricing, and what the job is for a quote.
+  if (chosenService.defaultPricingMode === "per_unit" && s.quantity === null && !s.askedAbout.includes("quantity")) {
+    s.askedAbout = [...s.askedAbout, "quantity"];
+    return question(prefix + say.askQuantity(chosenService.defaultUnitLabel ?? "unit"), s);
+  }
+  if (chosenService.defaultPricingMode === "quote" && !s.notes && !s.askedAbout.includes("description")) {
+    s.askedAbout = [...s.askedAbout, "description"];
+    return question(prefix + say.askDescription(), s);
+  }
+
   // Where: the user's word, else what the named business offers, else the service's default.
-  let locationMode: LocationMode = s.locationMode ?? chosenService.defaultLocationMode;
+  let locationMode = resolveLocationMode(s.locationMode, chosenService.defaultLocationMode);
   if (s.businessId) {
     const modes = await serviceLocationModes(s.businessId, chosenService.id);
-    const offered = s.locationMode ? modes.includes(s.locationMode) : modes.length > 0;
-    if (!offered) {
+    const acceptable = s.locationMode ? locationModesFor(s.locationMode) : modes;
+    const offered = modes.filter((mode) => acceptable.includes(mode));
+    if (offered.length === 0) {
       prefix += say.doesNotOffer(s.businessName ?? "That business", chosenService.name, s.locationMode === "at_customer");
       Object.assign(s, { businessId: null, businessName: null });
-    } else if (!s.locationMode && !modes.includes(locationMode)) {
-      locationMode = modes[0]!;
+    } else if (!offered.includes(locationMode)) {
+      locationMode = offered[0]!;
     }
   }
 
@@ -213,8 +241,8 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
   const coords = turn.location ?? home;
   if (!coords) return { kind: "needs_location", content: prefix + say.needsLocation(), state: s };
 
-  const address = locationMode === "at_customer" ? (s.address ?? user.homeAddress) : null;
-  if (locationMode === "at_customer" && !address) {
+  const address = locationMode === "at_business" ? null : (s.address ?? user.homeAddress);
+  if (locationMode !== "at_business" && !address) {
     s.askedAbout = [...new Set([...s.askedAbout, "address"])];
     return question(prefix + say.askAddress(), s);
   }
@@ -230,11 +258,13 @@ async function request(turn: Turn, u: Understanding): Promise<Outcome> {
     windowEnd: new Date(s.window!.end),
     lat: String(coords.lat),
     lng: String(coords.lng),
-    // Set only for work at the customer's; that is what makes it an at_customer search.
+    locationMode,
+    // Where the business comes to, or collects from.
     address,
     constraints: {
       ...s.details,
       ...(s.budgetMaxAed === null ? {} : { budget_max: s.budgetMaxAed }),
+      ...(s.quantity === null ? {} : { quantity: s.quantity }),
       ...(s.notes ? { notes: s.notes } : {}),
       // Completing the booking moves this reminder's due date on.
       ...(s.reminderId ? { reminder_id: s.reminderId } : {}),
@@ -302,9 +332,17 @@ async function selectOption(turn: Turn, u: Understanding): Promise<Outcome> {
       slotAt: slot!,
       now: turn.now,
     });
+    const offered = option.offeredSlots.findIndex((time) => time.getTime() === slot!.getTime());
     return {
       kind: "booked",
-      content: say.booked(option, slot!, turn.timeZone, booking.overlappingOrderIds.length > 0),
+      content: say.booked(
+        option,
+        slot!,
+        option.laterSlots?.[offered] ?? [],
+        booking.status,
+        turn.timeZone,
+        booking.overlappingOrderIds.length > 0,
+      ),
       state: emptyState(),
       searchId: view.search.id,
       orderId: booking.orderId,

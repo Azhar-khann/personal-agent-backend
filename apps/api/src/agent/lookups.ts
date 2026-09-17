@@ -1,5 +1,5 @@
 import { getDb, schema, type LocationMode } from "@personal-agent/core";
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 
 import { loadOrders } from "../orders.js";
 import { lettersAndDigits, MIN_NAME_KEY } from "./names.js";
@@ -19,12 +19,17 @@ export async function recentMessages(conversationId: string, limit: number) {
 
 export type UpcomingOrder = Awaited<ReturnType<typeof loadOrders>>[number];
 
-/** The user's confirmed orders that haven't started, soonest first. */
+/**
+ * The user's orders still to come, soonest first: booked, waiting for the
+ * business, or waiting on a quote — which may be after its visit.
+ */
 export async function upcomingOrders(userId: string, now: Date): Promise<UpcomingOrder[]> {
-  const confirmed = await loadOrders(and(eq(orders.userId, userId), eq(orders.status, "confirmed")));
-  return confirmed
-    .filter((order) => order.appointments[0] && order.appointments[0].scheduledAt > now)
-    .sort((a, b) => a.appointments[0]!.scheduledAt.getTime() - b.appointments[0]!.scheduledAt.getTime())
+  const open = await loadOrders(and(eq(orders.userId, userId), inArray(orders.status, ["requested", "quoted", "confirmed"])));
+  const next = (order: UpcomingOrder) =>
+    order.appointments.find((a) => a.scheduledAt > now && (a.status === "held" || a.status === "confirmed"));
+  return open
+    .filter((order) => order.status === "quoted" || next(order))
+    .sort((a, b) => (next(a)?.scheduledAt.getTime() ?? Infinity) - (next(b)?.scheduledAt.getTime() ?? Infinity))
     .slice(0, 10);
 }
 

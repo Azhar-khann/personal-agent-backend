@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   daysOfWeekInWindow,
+  freeChains,
   freeSlots,
   spreadSlots,
   type AvailabilityInput,
@@ -228,5 +229,58 @@ describe("spreadSlots", () => {
 
   it("returns every slot when there are three or fewer", () => {
     expect(spreadSlots([0, 1])).toEqual([0, 1]);
+  });
+});
+
+describe("freeChains — a pickup and a delivery", () => {
+  const base = {
+    now: at("2030-01-01T00:00"),
+    // Pickups on Monday morning only.
+    window: { start: at("2030-01-07T09:00"), end: at("2030-01-07T10:00") },
+    hours: everyDay("09:00", "12:00"),
+    closures: [],
+    appointments: [],
+    rules: { capacity: 1, slotIntervalMin: 30, bufferMin: 0, leadTimeMin: 0, maxAdvanceDays: 60 },
+    steps: [{ durationMin: 15 }, { durationMin: 15, afterHours: 24 }],
+  };
+  const chains = (overrides: Partial<Parameters<typeof freeChains>[0]> = {}) =>
+    freeChains({ ...base, ...overrides }).map((chain) => chain.slots.map((slot) => local(slot.start)));
+
+  it("delivers at the earliest free time once the gap has passed", () => {
+    expect(chains()).toEqual([
+      ["2030-01-07T09:00", "2030-01-08T09:30"],
+      ["2030-01-07T09:30", "2030-01-08T10:00"],
+    ]);
+  });
+
+  it("counts the gap from the end of the pickup and its buffer", () => {
+    expect(chains({ rules: { ...base.rules, bufferMin: 15 } })[0]).toEqual(["2030-01-07T09:00", "2030-01-08T09:30"]);
+    expect(chains({ steps: [{ durationMin: 15 }, { durationMin: 15, afterHours: 0 }] })[0]).toEqual([
+      "2030-01-07T09:00",
+      "2030-01-07T09:30",
+    ]);
+  });
+
+  it("moves the delivery past closed days and taken times", () => {
+    const closedTuesday = everyDay("09:00", "12:00").filter((row) => row.dayOfWeek !== 2);
+    expect(chains({ hours: closedTuesday })[0]).toEqual(["2030-01-07T09:00", "2030-01-09T09:00"]);
+    expect(chains({ appointments: [booked(0, "2030-01-08T09:30", "2030-01-08T11:00")] })[0]).toEqual([
+      "2030-01-07T09:00",
+      "2030-01-08T11:00",
+    ]);
+  });
+
+  it("doesn't offer a pickup with no delivery within a week of the gap", () => {
+    const mondaysOnly = [{ dayOfWeek: MON, opensAt: "09:00", closesAt: "12:00" }];
+    expect(chains({ hours: mondaysOnly })).toEqual([
+      ["2030-01-07T09:00", "2030-01-14T09:00"],
+      ["2030-01-07T09:30", "2030-01-14T09:00"],
+    ]);
+    const closedAfter = [{ start: at("2030-01-08T00:00"), end: at("2030-01-20T00:00") }];
+    expect(chains({ closures: closedAfter })).toEqual([]);
+  });
+
+  it("is just the free slots for a single step", () => {
+    expect(chains({ steps: [{ durationMin: 30 }] })).toEqual([["2030-01-07T09:00"], ["2030-01-07T09:30"]]);
   });
 });

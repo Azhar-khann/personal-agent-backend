@@ -51,6 +51,8 @@ export async function deliverEvent(eventId: string, sendPush: PushSender, now = 
         userId: orders.userId,
         businessId: orders.businessId,
         serviceAddress: orders.serviceAddress,
+        quantity: orders.quantity,
+        unitLabel: businessServices.unitLabel,
         businessName: businesses.name,
         businessPhone: businesses.phone,
         categoryId: businesses.categoryId,
@@ -68,10 +70,25 @@ export async function deliverEvent(eventId: string, sendPush: PushSender, now = 
       .where(eq(orders.id, event.orderId));
     if (!context) return { result: "skipped" };
 
-    const payload = event.payload as { appointmentId?: string; from?: string; to?: string; reason?: string | null };
+    const payload = event.payload as {
+      appointmentId?: string | null;
+      from?: string;
+      to?: string;
+      reason?: string | null;
+      needsApproval?: boolean;
+      holdExpiresAt?: string | null;
+      amountAed?: number;
+      finalPriceAed?: number;
+      estDurationMin?: number;
+      validUntil?: string;
+      quantity?: number | null;
+    };
     // The appointment the event names, else the order's most recent one.
     const [appointment] = await tx
-      .select({ scheduledAt: appointments.scheduledAt })
+      .select({
+        scheduledAt: appointments.scheduledAt,
+        kind: appointments.kind,
+      })
       .from(appointments)
       .where(payload.appointmentId ? eq(appointments.id, payload.appointmentId) : eq(appointments.orderId, event.orderId))
       .orderBy(desc(appointments.createdAt))
@@ -83,11 +100,19 @@ export async function deliverEvent(eventId: string, sendPush: PushSender, now = 
       serviceName: context.serviceName,
       customerName: context.customerName,
       scheduledAt: appointment?.scheduledAt ?? null,
+      appointmentKind: appointment?.kind ?? null,
       from: payload.from ? new Date(payload.from) : null,
       to: payload.to ? new Date(payload.to) : null,
       serviceAddress: context.serviceAddress,
       reason: payload.reason ?? null,
       userTimeZone: context.userTimeZone,
+      holdExpiresAt: payload.holdExpiresAt ? new Date(payload.holdExpiresAt) : null,
+      needsApproval: payload.needsApproval ?? false,
+      amountAed: payload.finalPriceAed ?? payload.amountAed ?? null,
+      estDurationMin: payload.estDurationMin ?? null,
+      validUntil: payload.validUntil ? new Date(payload.validUntil) : null,
+      quantity: payload.quantity ?? (context.quantity === null ? null : Number(context.quantity)),
+      unitLabel: context.unitLabel,
     });
 
     const pushed = delivery.push

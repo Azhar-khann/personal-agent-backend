@@ -50,7 +50,11 @@ export type StepKind = (typeof STEP_KINDS)[number];
 /** One appointment a service needs. Step N+1 is searched from step N's end plus after_hours. */
 export type Step = { kind: StepKind; duration_min: number; after_hours?: number };
 
-/** Phase 1 uses only the instant, single-step path: confirmed → completed, or a cancellation. */
+/**
+ * instant: confirmed → completed. request: requested → confirmed, declined or
+ * expired. quote: requested (visit booked) → quoted → confirmed, or expired.
+ * Any of them can be cancelled or end as a no-show.
+ */
 export const ORDER_STATUSES = [
   "requested",
   "quoted",
@@ -61,6 +65,8 @@ export const ORDER_STATUSES = [
   "cancelled_by_user",
   "cancelled_by_business",
   "no_show",
+  // A request the business never answered, or a quote the user never accepted.
+  "expired",
 ] as const;
 
 /** `held` is a requested order's appointment: it occupies the slot until the business decides. */
@@ -485,8 +491,12 @@ export const searches = pgTable(
     windowEnd: tstz("window_end").notNull(),
     lat: coord("lat").notNull(),
     lng: coord("lng").notNull(),
-    // Where the work happens, for an at_customer service; copied onto the
-    // order at booking. The agent defaults it to the user's home address.
+    // Which kind of business_services row the search looks for: a business can
+    // offer one service in several modes.
+    locationMode: text("location_mode").notNull().default("at_business"),
+    // Where the work happens, or where to collect from, when it isn't at the
+    // business; copied onto the order at booking. The agent defaults it to the
+    // user's home address.
     address: text("address"),
     constraints: jsonb("constraints")
       .notNull()
@@ -503,6 +513,7 @@ export const searches = pgTable(
   },
   (t) => [
     check("searches_mode_check", sql`${t.mode} IN ('search','direct','reminder')`),
+    check("searches_location_mode_check", oneOf(t.locationMode, LOCATION_MODES)),
     check(
       "searches_status_check",
       sql`${t.status} IN ('gathering','presenting','booked','no_results','abandoned')`,
@@ -542,6 +553,9 @@ export const searchOptions = pgTable(
     })
       .array()
       .notNull(),
+    // For a multi-step service, the times of the steps after the first, one
+    // list per offered slot: [[delivery for slot 1], [delivery for slot 2], ...].
+    laterSlots: jsonb("later_slots").$type<string[][]>(),
     presentedAt: tstz("presented_at").notNull().defaultNow(),
     selectedAt: tstz("selected_at"),
   },

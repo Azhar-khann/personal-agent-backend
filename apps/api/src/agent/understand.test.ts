@@ -14,6 +14,7 @@ const nothing: Understanding = {
   location: null,
   address: null,
   budget_max_aed: null,
+  quantity: null,
   notes: null,
   details: [],
   option_number: null,
@@ -41,7 +42,7 @@ describe("withoutPlaceholders", () => {
   });
 
   it("treats zero as not given — the model wrote budget 0 for no budget in the evals", () => {
-    const cleaned = withoutPlaceholders({ ...nothing, budget_max_aed: 0, choice_number: 0, option_number: 0, order_number: 0 });
+    const cleaned = withoutPlaceholders({ ...nothing, budget_max_aed: 0, quantity: 0, choice_number: 0, option_number: 0, order_number: 0 });
     expect(cleaned).toEqual(nothing);
     expect(withoutPlaceholders({ ...nothing, budget_max_aed: 150, choice_number: 2 })).toMatchObject({ budget_max_aed: 150, choice_number: 2 });
   });

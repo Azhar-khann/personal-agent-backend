@@ -10,7 +10,7 @@
 
 import { sql } from "drizzle-orm";
 
-import { singleStep } from "../service-settings.js";
+import { serviceSettingsProblems, stepsFor } from "../service-settings.js";
 import { getDb, closeDb } from "./client.js";
 import { canonicalServices, categories, admins, users } from "./schema.js";
 import { CANONICAL_SERVICES, CATEGORIES, CATEGORY_SERVICE_DEFAULTS } from "./seed-data.js";
@@ -57,16 +57,26 @@ async function seed(): Promise<void> {
       CANONICAL_SERVICES.map((s) => {
         const defaults = CATEGORY_SERVICE_DEFAULTS[s.categoryId];
         if (!defaults) throw new Error(`no service defaults for category '${s.categoryId}'`);
+        const settings = {
+          locationMode: s.locationMode ?? defaults.locationMode,
+          pricingMode: s.pricingMode ?? defaults.pricingMode,
+          unitLabel: s.unitLabel ?? null,
+          confirmation: s.confirmation ?? defaults.confirmation,
+        };
+        const steps = stepsFor(settings, s.durationMin, s.returnAfterHours);
+        // A canonical service has no price, so only the shape is checked.
+        const problems = serviceSettingsProblems({ ...settings, steps, priceAed: 0 });
+        if (problems.length > 0) throw new Error(`service '${s.id}': ${JSON.stringify(problems)}`);
         return {
           id: s.id,
           categoryId: s.categoryId,
           name: s.name,
           aliases: s.aliases,
-          defaultLocationMode: s.locationMode ?? defaults.locationMode,
-          defaultPricingMode: s.pricingMode ?? defaults.pricingMode,
-          defaultUnitLabel: s.unitLabel ?? null,
-          defaultConfirmation: s.confirmation ?? "instant",
-          defaultSteps: singleStep(s.durationMin),
+          defaultLocationMode: settings.locationMode,
+          defaultPricingMode: settings.pricingMode,
+          defaultUnitLabel: settings.unitLabel,
+          defaultConfirmation: settings.confirmation,
+          defaultSteps: steps,
           active: true,
         };
       }),

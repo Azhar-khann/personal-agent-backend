@@ -10,17 +10,32 @@ import type { NamedBusiness, UpcomingOrder } from "./lookups.js";
 import { formatClock, formatWhen, formatWindow, toLocal, type WindowProblem } from "@personal-agent/core";
 
 function price(option: SearchViewOption): string {
-  if (option.priceAed === null) return "price on quote";
-  return option.service.pricingMode === "from" ? `from AED ${option.priceAed}` : `AED ${option.priceAed}`;
+  const { pricingMode, unitLabel } = option.service;
+  if (pricingMode === "quote") {
+    return option.priceAed === null ? "priced after a visit" : `priced after a visit (visit AED ${option.priceAed})`;
+  }
+  if (pricingMode === "per_unit") {
+    return `AED ${option.priceAed}/${unitLabel}${option.estimateAed === null ? "" : ` (about AED ${option.estimateAed})`}`;
+  }
+  return pricingMode === "from" ? `from AED ${option.priceAed}` : `AED ${option.priceAed}`;
 }
 
-/** "12:00, 14:30 or 16:30", with the day added when the times span days. */
+const or = (labels: string[]) =>
+  labels.length > 1 ? `${labels.slice(0, -1).join(", ")} or ${labels.at(-1)}` : (labels[0] ?? "");
+
+/**
+ * "12:00, 14:30 or 16:30", with the day added when the times span days. A
+ * pickup shows when it comes back: "10:00 (back Sat 10:00)".
+ */
 function times(option: SearchViewOption, timeZone: string): string {
   const days = new Set(option.offeredSlots.map((slot) => toLocal(slot, timeZone).slice(0, 10)));
-  const labels = option.offeredSlots.map((slot) =>
-    days.size > 1 ? formatWhen(slot, timeZone) : formatClock(slot, timeZone),
+  return or(
+    option.offeredSlots.map((slot, i) => {
+      const label = days.size > 1 ? formatWhen(slot, timeZone) : formatClock(slot, timeZone);
+      const back = option.laterSlots?.[i]?.at(-1);
+      return back ? `${label} (back ${formatWhen(back, timeZone)})` : label;
+    }),
   );
-  return labels.length > 1 ? `${labels.slice(0, -1).join(", ")} or ${labels.at(-1)}` : (labels[0] ?? "");
 }
 
 function optionLines(view: SearchView, timeZone: string): string {
@@ -30,7 +45,8 @@ function optionLines(view: SearchView, timeZone: string): string {
       // Two branches of one business need their address to tell them apart.
       const repeated = names.filter((name) => name === option.business.name).length > 1;
       const business = repeated ? `${option.business.name} (${option.business.address})` : option.business.name;
-      return `${option.rank}. ${business} — ${option.service.displayName}, ${price(option)}, ${option.distanceKm} km — ${times(option, timeZone)}`;
+      const approval = option.service.confirmation === "request" ? ", they confirm each booking" : "";
+      return `${option.rank}. ${business} — ${option.service.displayName}, ${price(option)}${approval}, ${option.distanceKm} km — ${times(option, timeZone)}`;
     })
     .join("\n");
 }
@@ -101,6 +117,14 @@ export function askAddress(): string {
   return "What's the address they should come to?";
 }
 
+export function askQuantity(unitLabel: string): string {
+  return `Roughly how many ${unitLabel === "item" ? "items" : unitLabel}? A guess is fine, or say you're not sure.`;
+}
+
+export function askDescription(): string {
+  return "Briefly, what's the job? It helps them come prepared to quote.";
+}
+
 export function needsLocation(): string {
   return "I need to know where you are to find places nearby. Add your home address in Settings, or share your location, then ask again.";
 }
@@ -121,8 +145,34 @@ export function doesNotOffer(businessName: string, serviceName: string, atCustom
 
 // --- picking and booking ------------------------------------------------------
 
-export function booked(option: SearchViewOption, slot: Date, timeZone: string, overlaps: boolean): string {
-  return `Booked: ${option.service.displayName} with ${option.business.name}, ${formatWhen(slot, timeZone)}, ${price(option)}.${overlaps ? " Heads up: you have another booking at that time." : ""}`;
+/**
+ * What was booked: a booking, a request the business confirms, or a visit to
+ * quote. A pickup says when it comes back.
+ */
+export function booked(
+  option: SearchViewOption,
+  slot: Date,
+  laterSlots: Date[],
+  status: "confirmed" | "requested",
+  timeZone: string,
+  overlaps: boolean,
+): string {
+  const { displayName, pricingMode, confirmation } = option.service;
+  const when = formatWhen(slot, timeZone);
+  const back = laterSlots.at(-1);
+  const pickup = back ? `pickup ${when}, back ${formatWhen(back, timeZone)}` : when;
+  const warning = overlaps ? " Heads up: you have another booking at that time." : "";
+  const name = option.business.name;
+
+  if (pricingMode === "quote") {
+    return confirmation === "request" && status === "requested"
+      ? `Asked ${name} to visit ${when} to quote for ${displayName}. They'll confirm within 2 hours; I'll let you know.${warning}`
+      : `${name} will visit ${when} to quote for ${displayName}. You'll get the quote here to accept.${warning}`;
+  }
+  if (status === "requested") {
+    return `Requested: ${displayName} with ${name}, ${pickup}, ${price(option)}. They'll confirm within 2 hours; I'll let you know.${warning}`;
+  }
+  return `Booked: ${displayName} with ${name}, ${pickup}, ${price(option)}.${warning}`;
 }
 
 export function whichOption(view: SearchView): string {
@@ -154,8 +204,13 @@ export function nothingToPick(): string {
 
 // --- existing bookings ----------------------------------------------------------
 
-const describeOrder = (order: UpcomingOrder, timeZone: string) =>
-  `${order.service.displayName} with ${order.business.name}, ${formatWhen(order.appointments[0]!.scheduledAt, timeZone)}`;
+function describeOrder(order: UpcomingOrder, timeZone: string): string {
+  const what = `${order.service.displayName} with ${order.business.name}`;
+  if (order.status === "quoted" && order.quote) return `${what}, quoted AED ${order.quote.amountAed}`;
+  const next = order.appointments.find((a) => a.status === "held" || a.status === "confirmed");
+  const when = next ? `, ${formatWhen(next.scheduledAt, timeZone)}` : "";
+  return `${what}${when}${order.status === "requested" ? " (waiting for them)" : ""}`;
+}
 
 export function noBookings(): string {
   return "You don't have any upcoming bookings.";

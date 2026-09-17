@@ -23,6 +23,8 @@ const AgentStateSchema = z.object({
   locationMode: z.enum(["at_business", "at_customer"]).nullable(),
   address: z.string().nullable(),
   budgetMaxAed: z.number().nullable(),
+  /** How many units, for a service priced per unit. */
+  quantity: z.number().nullable().default(null),
   notes: z.string().nullable(),
   /** Answers to the category's other request_schema fields. */
   details: z.record(z.string()),
@@ -56,6 +58,7 @@ export function emptyState(): AgentState {
     locationMode: null,
     address: null,
     budgetMaxAed: null,
+    quantity: null,
     notes: null,
     details: {},
     askedAbout: [],

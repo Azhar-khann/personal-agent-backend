@@ -9,16 +9,9 @@ import { findOptions, type FindOptionsResult } from "./find-options.js";
 /** A search can be (re)presented until it's booked or abandoned. */
 const SEARCHABLE_STATUSES = ["gathering", "presenting", "no_results"];
 
-/**
- * Only a search for work at the customer's carries an address, so the address
- * decides which kind of business_services row the search looks for.
- */
-export function searchLocationMode(search: { address: string | null }): LocationMode {
-  return search.address === null ? "at_business" : "at_customer";
-}
-
-function budgetMaxAed(constraints: unknown): number | null {
-  const value = (constraints as { budget_max?: unknown } | null)?.budget_max;
+/** A non-negative number the agent stored in a search's constraints, e.g. budget_max. */
+export function constraintNumber(constraints: unknown, key: "budget_max" | "quantity"): number | null {
+  const value = (constraints as Record<string, unknown> | null)?.[key];
   return typeof value === "number" && value >= 0 ? value : null;
 }
 
@@ -46,12 +39,13 @@ export async function runSearch(searchId: string, now = new Date()): Promise<Fin
     userId: search.userId,
     categoryId: search.categoryId,
     canonicalServiceId: search.canonicalServiceId,
-    locationMode: searchLocationMode(search),
+    locationMode: search.locationMode as LocationMode,
     namedBusinessId: search.namedBusinessId,
     lat: Number(search.lat),
     lng: Number(search.lng),
     window: { start: search.windowStart, end: search.windowEnd },
-    budgetMaxAed: budgetMaxAed(search.constraints),
+    budgetMaxAed: constraintNumber(search.constraints, "budget_max"),
+    quantity: constraintNumber(search.constraints, "quantity"),
     now,
   });
 
@@ -96,6 +90,7 @@ export async function runSearch(searchId: string, now = new Date()): Promise<Fin
           priceAed: option.priceAed === null ? null : option.priceAed.toFixed(2),
           distanceKm: option.distanceKm.toFixed(2),
           offeredSlots: option.offeredSlots,
+          laterSlots: option.laterSlots?.map((times) => times.map((time) => time.toISOString())) ?? null,
           presentedAt: now,
         })),
       );

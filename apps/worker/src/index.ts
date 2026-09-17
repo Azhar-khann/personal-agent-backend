@@ -11,6 +11,8 @@ import {
   completeFinishedOrders,
   createRedis,
   enqueueOrderEvents,
+  expireLapsedQuotes,
+  expireUnansweredRequests,
   getDb,
   getQueue,
   JOBS,
@@ -46,7 +48,12 @@ async function run(job: Job): Promise<unknown> {
     case JOBS.deliverEvent:
       return deliverEvent((job.data as { eventId: string }).eventId, sendPush);
     case JOBS.appointmentsSweep:
-      return { reminded: await remindUpcomingAppointments(), completed: await completeFinishedOrders() };
+      return {
+        reminded: await remindUpcomingAppointments(),
+        completed: await completeFinishedOrders(),
+        requestsExpired: await expireUnansweredRequests(),
+        quotesExpired: await expireLapsedQuotes(),
+      };
     case JOBS.eventsSweep: {
       const stale = await staleUndeliveredEventIds();
       await enqueueOrderEvents(stale);

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, lte } from "drizzle-orm";
 
 import type { Executor, Transaction } from "../db/client.js";
 import { appointments, businesses, orderEvents, orders } from "../db/schema.js";
@@ -25,6 +25,16 @@ export const slotUnavailable = () =>
 
 /** Appointment states that still hold time for their order. */
 export const ACTIVE_APPOINTMENT_STATUSES = ["held", "confirmed"] as const;
+
+const MINUTE_MS = 60_000;
+
+/** How long a business has to answer a request before its time is released. */
+export const REQUEST_HOLD_MIN = 120;
+
+/** When a held appointment's request expires: two hours after it was made, or when it would start. */
+export function holdExpiresAt(appointment: { createdAt: Date; scheduledAt: Date }): Date {
+  return new Date(Math.min(appointment.createdAt.getTime() + REQUEST_HOLD_MIN * MINUTE_MS, appointment.scheduledAt.getTime()));
+}
 
 /**
  * Locks an order for a state change, checking it belongs to whoever asks.
@@ -95,6 +105,30 @@ export async function withEvents<T>(work: (eventIds: string[]) => Promise<T>): P
   const result = await work(eventIds);
   await enqueueOrderEvents(eventIds);
   return result;
+}
+
+/**
+ * Cancels an order's appointments that still hold time. Cancelled appointments
+ * leave the no_double_booking index, so the time is free again at once.
+ */
+export async function releaseAppointments(tx: Transaction, orderId: string, now: Date): Promise<void> {
+  await tx
+    .update(appointments)
+    .set({ status: "cancelled", updatedAt: now })
+    .where(and(eq(appointments.orderId, orderId), inArray(appointments.status, [...ACTIVE_APPOINTMENT_STATUSES])));
+}
+
+/**
+ * For an order ending before its job: a confirmed appointment that has already
+ * started — a quote's site visit, say — happened, so it's completed; the rest
+ * are released.
+ */
+export async function settleAppointments(tx: Transaction, orderId: string, now: Date): Promise<void> {
+  await tx
+    .update(appointments)
+    .set({ status: "completed", updatedAt: now })
+    .where(and(eq(appointments.orderId, orderId), eq(appointments.status, "confirmed"), lte(appointments.scheduledAt, now)));
+  await releaseAppointments(tx, orderId, now);
 }
 
 /** An order's appointments that still hold time, earliest first. */

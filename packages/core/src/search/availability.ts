@@ -170,6 +170,77 @@ export function freeSlots(input: AvailabilityInput): FreeSlot[] {
   return slots;
 }
 
+/** How far past its earliest possible time a later step may be put. */
+export const LATER_STEP_DAYS = 7;
+
+export type ChainStep = { durationMin: number; afterHours?: number };
+
+/** A free time for each step of a service: slots[0] is the one the user picks. */
+export type FreeChain = { slots: FreeSlot[] };
+
+/**
+ * Free times for a service with several steps, such as a pickup and a delivery.
+ *
+ * The user picks the first step's time. Each later step takes the earliest
+ * free time once the previous step has ended, its buffer has passed and
+ * `afterHours` have gone by, within LATER_STEP_DAYS of that. A first time with
+ * no such chain isn't offered. A single-step service is its free slots.
+ *
+ * A later step never overlaps the previous one, even on the same resource,
+ * because it starts after the previous step's buffer. So each step's free
+ * times can be worked out once, not once per chain.
+ */
+export function freeChains(input: Omit<AvailabilityInput, "durationMin"> & { steps: ChainStep[] }): FreeChain[] {
+  const { steps, rules } = input;
+  const [first, ...later] = steps;
+  if (!first) return [];
+
+  const firstSlots = freeSlots({ ...input, durationMin: first.durationMin });
+  if (later.length === 0) return firstSlots.map((slot) => ({ slots: [slot] }));
+
+  // Every later step's free times, over every moment a chain could reach.
+  let reach = input.window.end.getTime();
+  const laterSlots = later.map((step, i) => {
+    const previous = steps[i]!;
+    const from = input.window.start.getTime() + (previous.durationMin + rules.bufferMin) * MINUTE_MS;
+    reach += (previous.durationMin + rules.bufferMin) * MINUTE_MS + (step.afterHours ?? 0) * 60 * MINUTE_MS + LATER_STEP_DAYS * DAY_MS;
+    return freeSlots({
+      ...input,
+      durationMin: step.durationMin,
+      window: { start: new Date(from), end: new Date(reach) },
+    });
+  });
+
+  const chains: FreeChain[] = [];
+  for (const slot of firstSlots) {
+    const chain = [slot];
+    for (const [i, step] of later.entries()) {
+      const previous = chain[i]!;
+      const earliest =
+        previous.start.getTime() +
+        (steps[i]!.durationMin + rules.bufferMin) * MINUTE_MS +
+        (step.afterHours ?? 0) * 60 * MINUTE_MS;
+      const next = firstAtOrAfter(laterSlots[i]!, earliest);
+      if (!next || next.start.getTime() > earliest + LATER_STEP_DAYS * DAY_MS) break;
+      chain.push(next);
+    }
+    if (chain.length === steps.length) chains.push({ slots: chain });
+  }
+  return chains;
+}
+
+/** The first slot starting at or after `at`, in slots sorted by start. */
+function firstAtOrAfter(slots: FreeSlot[], at: number): FreeSlot | undefined {
+  let low = 0;
+  let high = slots.length;
+  while (low < high) {
+    const middle = (low + high) >> 1;
+    if (slots[middle]!.start.getTime() < at) low = middle + 1;
+    else high = middle;
+  }
+  return slots[low];
+}
+
 /**
  * §5 Step 3: "up to three free times, spread across the window rather than
  * three in a row" — the first, the last, and evenly between.

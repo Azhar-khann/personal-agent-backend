@@ -21,10 +21,11 @@ import {
 } from "../db/schema.js";
 import {
   daysOfWeekInWindow,
-  freeSlots,
+  freeChains,
+  LATER_STEP_DAYS,
   spreadSlots,
   type BusyAppointment,
-  type FreeSlot,
+  type FreeChain,
   type Interval,
   type OpeningHours,
 } from "./availability.js";
@@ -49,8 +50,11 @@ export type FindOptionsParams = {
   namedBusinessId: string | null;
   lat: number;
   lng: number;
+  /** When the first step may start. */
   window: Interval;
   budgetMaxAed: number | null;
+  /** How many units, for a per_unit service, when the user said. */
+  quantity: number | null;
   now?: Date;
 };
 
@@ -60,9 +64,13 @@ export type SearchOption = {
   businessId: string;
   businessServiceId: string;
   pricingMode: PricingMode;
+  /** The price, the minimum, the unit price, or a quote's visit fee. */
   priceAed: number | null;
   distanceKm: number;
+  /** Start times for the first step. */
   offeredSlots: Date[];
+  /** For a multi-step service, the later steps' times for each offered slot; else null. */
+  laterSlots: Date[][] | null;
 };
 
 export type FindOptionsResult = {
@@ -213,6 +221,25 @@ export async function loadAvailability(
   return data;
 }
 
+/** Minutes past its start a chain of steps can reach: every step's length and buffer, the gaps, and a week per later step. */
+export function chainReachMin(steps: Step[], bufferMin: number): number {
+  return steps.reduce(
+    (total, step, i) =>
+      total + step.duration_min + bufferMin + (i > 0 ? (step.after_hours ?? 0) * 60 + LATER_STEP_DAYS * 24 * 60 : 0),
+    0,
+  );
+}
+
+/**
+ * The price to hold against the budget: a per-unit price times the quantity,
+ * when known. A quote's visit fee isn't the job's price, so a quote has none.
+ */
+export function comparablePrice(pricingMode: PricingMode, priceAed: number | null, quantity: number | null): number | null {
+  if (pricingMode === "quote") return null;
+  if (pricingMode === "per_unit") return priceAed !== null && quantity !== null ? priceAed * quantity : null;
+  return priceAed;
+}
+
 /** Businesses the user has a completed order with — the ranking's affinity. */
 async function visitedBusinesses(userId: string, businessIds: string[]): Promise<Set<string>> {
   const rows = await getDb()
@@ -236,25 +263,24 @@ const filterStep = traceable(
   async (p: FindOptionsParams) =>
     (await findCandidates(p))
       // §5: drop any row further away than that business's radius.
-      .filter((c) => c.distance_km <= c.radius_km)
-      // Phase 1 books single-step services; chaining steps is Stage 9.
-      .filter((c) => c.steps.length === 1),
+      .filter((c) => c.distance_km <= c.radius_km),
   { name: "filter", run_type: "retriever" },
 );
 
 /** Step 2: the free times at each, dropping businesses with none. */
 const availabilityStep = traceable(
   async (candidates: CandidateRow[], window: Interval, now: Date) => {
-    // A slot starts before the window ends, then holds its duration and buffer.
-    const longestMin = Math.max(...candidates.map((c) => c.steps[0]!.duration_min + c.buffer_min));
+    // A first step starts before the window ends; every step then holds its
+    // duration and buffer, and a later one may wait its gap plus a week.
+    const longestMin = Math.max(...candidates.map((c) => chainReachMin(c.steps, c.buffer_min)));
     const range = { start: window.start, end: new Date(window.end.getTime() + longestMin * 60_000) };
     const availability = await loadAvailability(candidates.map((c) => c.id), range);
 
     return candidates.flatMap((candidate) => {
-      const slots = freeSlots({
+      const chains = freeChains({
         now,
         window,
-        durationMin: candidate.steps[0]!.duration_min,
+        steps: candidate.steps.map((step) => ({ durationMin: step.duration_min, afterHours: step.after_hours })),
         rules: {
           capacity: candidate.capacity,
           slotIntervalMin: candidate.slot_interval_min,
@@ -265,7 +291,7 @@ const availabilityStep = traceable(
         ...availability.get(candidate.id)!,
       });
       // §5: a business with no free slots in the window is dropped entirely.
-      return slots.length > 0 ? [{ candidate, slots }] : [];
+      return chains.length > 0 ? [{ candidate, chains }] : [];
     });
   },
   { name: "availability" },
@@ -273,10 +299,10 @@ const availabilityStep = traceable(
 
 /** Step 3: score, sort, keep the top five with three spread times each. */
 const rankStep = traceable(
-  async (available: { candidate: CandidateRow; slots: FreeSlot[] }[], p: FindOptionsParams): Promise<SearchOption[]> => {
+  async (available: { candidate: CandidateRow; chains: FreeChain[] }[], p: FindOptionsParams): Promise<SearchOption[]> => {
     const visited = await visitedBusinesses(p.userId, available.map(({ candidate }) => candidate.id));
 
-    const scored = available.map(({ candidate: c, slots }) => {
+    const scored = available.map(({ candidate: c, chains }) => {
       const priceAed = c.price_aed === null ? null : Number(c.price_aed);
       const score = rankingScore({
         distanceKm: c.distance_km,
@@ -285,27 +311,31 @@ const rankStep = traceable(
         timesSelected: c.selected,
         bookingsTotal: c.bookings_total,
         cancellationsByBusiness: c.cancellations,
-        priceAed,
+        priceAed: comparablePrice(c.pricing_mode, priceAed, p.quantity),
         budgetMaxAed: p.budgetMaxAed,
         visitedBefore: visited.has(c.id),
       });
-      return { c, slots, priceAed, score };
+      return { c, chains, priceAed, score };
     });
 
     // Highest score first; nearer wins a tie, so the order is stable.
     scored.sort((a, b) => b.score - a.score || a.c.distance_km - b.c.distance_km);
 
     // Fewer than five is shown as it is, never padded (§7).
-    return scored.slice(0, MAX_OPTIONS).map(({ c, slots, priceAed, score }, i) => ({
-      rank: i + 1,
-      rankScore: score,
-      businessId: c.id,
-      businessServiceId: c.business_service_id,
-      pricingMode: c.pricing_mode,
-      priceAed,
-      distanceKm: c.distance_km,
-      offeredSlots: spreadSlots(slots, SLOTS_PER_OPTION).map((slot) => slot.start),
-    }));
+    return scored.slice(0, MAX_OPTIONS).map(({ c, chains, priceAed, score }, i) => {
+      const offered = spreadSlots(chains, SLOTS_PER_OPTION);
+      return {
+        rank: i + 1,
+        rankScore: score,
+        businessId: c.id,
+        businessServiceId: c.business_service_id,
+        pricingMode: c.pricing_mode,
+        priceAed,
+        distanceKm: c.distance_km,
+        offeredSlots: offered.map((chain) => chain.slots[0]!.start),
+        laterSlots: c.steps.length > 1 ? offered.map((chain) => chain.slots.slice(1).map((slot) => slot.start)) : null,
+      };
+    });
   },
   { name: "rank" },
 );

@@ -27,6 +27,7 @@ const nothing: Understanding = {
   location: null,
   address: null,
   budget_max_aed: null,
+  quantity: null,
   notes: null,
   details: [],
   option_number: null,
@@ -57,7 +58,7 @@ describe("scoreCategory", () => {
   });
 
   it("ignores ids that aren't in the catalogue", () => {
-    expect(categoryOutcome({ ...nothing, category_id: "electrician" }, catalogue)).toBe("unsupported");
+    expect(categoryOutcome({ ...nothing, category_id: "pest_control" }, catalogue)).toBe("unsupported");
   });
 });
 
@@ -78,14 +79,14 @@ describe("topConfusions", () => {
 });
 
 describe("scoreSlots", () => {
-  const none = { service_id: null, window: null, location: null, has_address: false, budget_max_aed: null, has_notes: false, details: {} };
+  const none = { service_id: null, window: null, location: null, has_address: false, budget_max_aed: null, has_notes: false, details: {}, quantity: null };
 
   it("scores each field on its own", () => {
     const scores = scoreSlots(
       { ...nothing, service_id: "manicure", budget_max_aed: 100, details: [{ key: "Gender_Preference", value: "Female " }] },
       { ...none, service_id: "manicure", location: "at_customer", budget_max_aed: 100, details: { gender_preference: "female" } },
     );
-    expect(scores).toEqual({ service: true, window: true, location: false, address: true, budget: true, notes: true, details: true });
+    expect(scores).toEqual({ service: true, window: true, location: false, address: true, budget: true, quantity: true, notes: true, details: true });
   });
 
   it("accepts any of a detail's listed values, and nothing invented", () => {

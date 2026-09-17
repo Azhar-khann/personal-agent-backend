@@ -35,6 +35,7 @@ export const Understanding = z.object({
   location: z.enum(["at_business", "at_customer"]).nullable(),
   address: z.string().nullable(),
   budget_max_aed: z.number().nullable(),
+  quantity: z.number().nullable(),
   notes: z.string().nullable(),
   details: z.array(z.object({ key: z.string(), value: z.string() })),
   option_number: z.number().int().nullable(),
@@ -70,7 +71,12 @@ function instructions(catalogue: Catalogue): string {
   const categories = catalogue.categories.flatMap((category) => [
     `- ${category.id} (${category.name})${category.agentHints ? `: ${category.agentHints}` : ""}`,
     `  services: ${category.services
-      .map((service) => `${service.id} = ${service.name}${service.aliases.length ? ` [${service.aliases.join(", ")}]` : ""}`)
+      .map(
+        (service) =>
+          `${service.id} = ${service.name}${service.defaultUnitLabel ? ` (per ${service.defaultUnitLabel})` : ""}${
+            service.aliases.length ? ` [${service.aliases.join(", ")}]` : ""
+          }`,
+      )
       .join("; ")}`,
     ...(category.optional.filter((key) => key !== "budget_max" && key !== "notes").length
       ? [`  optional details: ${category.optional.filter((key) => key !== "budget_max" && key !== "notes").join(", ")}`]
@@ -95,8 +101,9 @@ Rules:
 - Only when nothing in the catalogue could fit (a flight, a lawyer), leave category_id null and category_candidates empty.
 - business_name: only when the user names a specific business.
 - choice_number: when the assistant's last message offered numbered choices and the user picks one, by number or by describing it ("the Al Barsha one"). Then leave business_name and category_id null.
-- location: "at_customer" when the user wants the work done at their place, "at_business" when they'll go to the business, null when unsaid. address: only an address the user states.
-- budget_max_aed: the most the user said they'll pay, in AED. notes: any other instruction for the business, e.g. "call when you're outside" or "the building has no parking".
+- location: "at_customer" when the user wants the work done at their place or things collected from there, "at_business" when they'll go to the business or drop things off, null when unsaid. address: only an address the user states for where the work happens or where to collect from — not a place they're moving to.
+- budget_max_aed: the most the user said they'll pay, in AED. notes: any other instruction for the business, e.g. "call when you're outside" or "the building has no parking", or a description of the job when the assistant asked for one.
+- quantity: how many of a service's unit the user states, e.g. 8 for "about 8 kg of laundry" or 5 for "five shirts to dry clean". Only for services priced per unit.
 - details: answers to the category's optional details, as key/value pairs.
 - option_number and option_time: the option's number and the chosen offered time, copied exactly from the options on screen.
 - order_number: the upcoming booking's number, when it's clear which one.
@@ -126,7 +133,7 @@ function situation(context: UnderstandContext, catalogue: Catalogue): string {
     lines.push(
       "Current request:",
       `  category: ${state.categoryId ?? "unknown"}, service: ${service?.id ?? "unknown"}, when: ${window}`,
-      `  business named: ${state.businessName ?? "none"}, location: ${state.locationMode ?? "unsaid"}, budget: ${state.budgetMaxAed ?? "none"}`,
+      `  business named: ${state.businessName ?? "none"}, location: ${state.locationMode ?? "unsaid"}, budget: ${state.budgetMaxAed ?? "none"}, quantity: ${state.quantity ?? "none"}`,
       "",
     );
   } else {
@@ -159,7 +166,9 @@ function situation(context: UnderstandContext, catalogue: Catalogue): string {
       "Upcoming bookings:",
       ...context.orders.map(
         (order, i) =>
-          `  ${i + 1}. ${order.business.name} — ${order.service.displayName} — ${toLocal(order.appointments[0]!.scheduledAt, timeZone)}`,
+          `  ${i + 1}. ${order.business.name} — ${order.service.displayName} — ${
+            order.appointments[0] ? toLocal(order.appointments[0].scheduledAt, timeZone) : order.status
+          }`,
       ),
       "",
     );
@@ -196,6 +205,7 @@ export function withoutPlaceholders(u: Understanding): Understanding {
   return {
     ...u,
     budget_max_aed: positive(u.budget_max_aed),
+    quantity: positive(u.quantity),
     choice_number: positive(u.choice_number),
     option_number: positive(u.option_number),
     order_number: positive(u.order_number),

@@ -8,12 +8,12 @@
  * twice — or two workers at once — changes nothing extra.
  */
 
-import { and, asc, eq, gt, isNull, lte, notExists, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull, lte, notExists, sql } from "drizzle-orm";
 
 import { getDb } from "../db/client.js";
-import { appointments, orderEvents, orders } from "../db/schema.js";
-import { ACTIVE_APPOINTMENT_STATUSES, OrderError, recordEvent, withEvents } from "./common.js";
-import { completeOrderAutomatically } from "./transitions.js";
+import { appointments, orderEvents, orders, quotes } from "../db/schema.js";
+import { ACTIVE_APPOINTMENT_STATUSES, OrderError, recordEvent, REQUEST_HOLD_MIN, withEvents } from "./common.js";
+import { completeOrderAutomatically, expireQuote, expireRequest } from "./transitions.js";
 
 const MINUTE_MS = 60_000;
 const BATCH = 200;
@@ -50,7 +50,8 @@ const reminderEventForAppointment = () =>
 
 /**
  * Records an appointment.reminder event for each confirmed appointment that
- * starts within the hour; delivering it messages the user. Appointments booked
+ * starts within the hour; delivering it messages the user. That includes a
+ * quote's site visit while the order waits for its quote. Appointments booked
  * with less than an hour to go don't get one.
  */
 export async function remindUpcomingAppointments(now = new Date()): Promise<number> {
@@ -64,7 +65,7 @@ export async function remindUpcomingAppointments(now = new Date()): Promise<numb
     .where(
       and(
         eq(appointments.status, "confirmed"),
-        eq(orders.status, "confirmed"),
+        inArray(orders.status, ["requested", "quoted", "confirmed"]),
         gt(appointments.scheduledAt, now),
         lte(appointments.scheduledAt, horizon),
         sql`${appointments.createdAt} <= ${appointments.scheduledAt} - make_interval(mins => ${REMINDER_LEAD_MIN})`,
@@ -151,6 +152,43 @@ export async function completeFinishedOrders(now = new Date()): Promise<number> 
     }
   }
   return completed;
+}
+
+/**
+ * Requests the business didn't answer in time: two hours after they were made,
+ * or when they'd start if that's sooner. Each expires and frees its time.
+ */
+export async function expireUnansweredRequests(now = new Date()): Promise<number> {
+  const lapsed = await getDb()
+    .selectDistinct({ orderId: appointments.orderId })
+    .from(appointments)
+    .innerJoin(orders, eq(orders.id, appointments.orderId))
+    .where(
+      and(
+        eq(orders.status, "requested"),
+        eq(appointments.status, "held"),
+        sql`LEAST(${appointments.createdAt} + make_interval(mins => ${REQUEST_HOLD_MIN}), ${appointments.scheduledAt}) <= ${now.toISOString()}::timestamptz`,
+      ),
+    )
+    .limit(BATCH);
+
+  let expired = 0;
+  for (const { orderId } of lapsed) if (await expireRequest(orderId, now)) expired++;
+  return expired;
+}
+
+/** Quotes past their valid-until date: each expires, with the order waiting on it. */
+export async function expireLapsedQuotes(now = new Date()): Promise<number> {
+  const lapsed = await getDb()
+    .selectDistinct({ orderId: quotes.orderId })
+    .from(quotes)
+    .innerJoin(orders, eq(orders.id, quotes.orderId))
+    .where(and(eq(orders.status, "quoted"), eq(quotes.status, "sent"), lte(quotes.validUntil, now)))
+    .limit(BATCH);
+
+  let expired = 0;
+  for (const { orderId } of lapsed) if (await expireQuote(orderId, now)) expired++;
+  return expired;
 }
 
 /** Events that should have been delivered by now, oldest first. */

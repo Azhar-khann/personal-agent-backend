@@ -9,7 +9,7 @@
  * Adding a category needs no code change — only rows here.
  */
 
-import type { Confirmation, LocationMode, PricingMode } from "../service-settings.js";
+import type { Confirmation, LocationMode, PricingMode } from "./schema.js";
 
 export type OnboardingField = {
   key: string;
@@ -40,8 +40,10 @@ export type CanonicalServiceSeed = {
   categoryId: string;
   name: string;
   aliases: string[];
-  /** Length of the single job step. */
+  /** Length of each step: the job, the site visit, or the pickup and the delivery. */
   durationMin: number;
+  /** pickup_delivery: the least time between pickup and delivery. */
+  returnAfterHours?: number;
   /** Overrides of the category's defaults below, for one service. */
   locationMode?: LocationMode;
   pricingMode?: PricingMode;
@@ -50,21 +52,25 @@ export type CanonicalServiceSeed = {
 };
 
 /**
- * Default service settings by category. Home services happen at the
- * customer's, at a from-price the visit confirms; everything else is a fixed
- * price at the shop. All instant and single-step — the Phase 1 set.
+ * Default service settings by category; a service can override them. Home
+ * repairs happen at the customer's at a from-price; laundry is collected and
+ * returned, priced per unit; electricians and movers visit and quote, and
+ * movers confirm each request. The rest is a fixed price at the business.
  */
 export const CATEGORY_SERVICE_DEFAULTS: Record<
   string,
-  { locationMode: LocationMode; pricingMode: PricingMode }
+  { locationMode: LocationMode; pricingMode: PricingMode; confirmation: Confirmation }
 > = {
-  barber: { locationMode: "at_business", pricingMode: "fixed" },
-  salon: { locationMode: "at_business", pricingMode: "fixed" },
-  dentist: { locationMode: "at_business", pricingMode: "fixed" },
-  car_service: { locationMode: "at_business", pricingMode: "fixed" },
-  ac_maintenance: { locationMode: "at_customer", pricingMode: "from" },
-  plumber: { locationMode: "at_customer", pricingMode: "from" },
-  handyman: { locationMode: "at_customer", pricingMode: "from" },
+  barber: { locationMode: "at_business", pricingMode: "fixed", confirmation: "instant" },
+  salon: { locationMode: "at_business", pricingMode: "fixed", confirmation: "instant" },
+  dentist: { locationMode: "at_business", pricingMode: "fixed", confirmation: "instant" },
+  car_service: { locationMode: "at_business", pricingMode: "fixed", confirmation: "instant" },
+  ac_maintenance: { locationMode: "at_customer", pricingMode: "from", confirmation: "instant" },
+  plumber: { locationMode: "at_customer", pricingMode: "from", confirmation: "instant" },
+  handyman: { locationMode: "at_customer", pricingMode: "from", confirmation: "instant" },
+  laundry: { locationMode: "pickup_delivery", pricingMode: "per_unit", confirmation: "instant" },
+  electrician: { locationMode: "at_customer", pricingMode: "quote", confirmation: "instant" },
+  movers: { locationMode: "at_customer", pricingMode: "quote", confirmation: "request" },
 };
 
 /** Every category's request_schema needs at least these two (§4). */
@@ -203,7 +209,7 @@ export const CATEGORIES: CategorySeed[] = [
     agentHints:
       "General odd jobs: mounting, furniture assembly, painting, door and lock " +
       "fixes, curtain rails. The catch-all — if the job is specifically water " +
-      "(plumber) or electrical, prefer the specific category. Ask when unsure: " +
+      "(plumber) or electrical (electrician), prefer the specific category. Ask when unsure: " +
       "plumber-versus-handyman is the confusion that actually hurts.",
     defaultDurationMin: 60,
     defaultRadiusKm: 20,
@@ -229,6 +235,71 @@ export const CATEGORIES: CategorySeed[] = [
     defaultDurationMin: 120,
     defaultRadiusKm: 25,
     recurringDefaultDays: 180,
+  },
+  {
+    id: "laundry",
+    name: "Laundry",
+    groupName: "Home services",
+    onboardingSchema: {
+      fields: [
+        { key: "express_service", type: "bool", label: "Offer same-day express", required: true },
+        { key: "min_order_aed", type: "number", label: "Minimum order (AED)", required: false },
+      ],
+    },
+    requestSchema: {
+      required: ["service", "time_window"],
+      optional: ["budget_max", "notes"],
+    },
+    agentHints:
+      "Washing, dry cleaning and ironing, collected from the customer and brought back. " +
+      "The time the user gives is the pickup; priced per kg or per item.",
+    defaultDurationMin: 15,
+    defaultRadiusKm: 15,
+    recurringDefaultDays: null,
+  },
+  {
+    id: "electrician",
+    name: "Electrician",
+    groupName: "Home services",
+    onboardingSchema: {
+      fields: [
+        { key: "dewa_approved", type: "bool", label: "DEWA-approved contractor", required: true },
+        { key: "emergency_service", type: "bool", label: "24/7 emergency", required: false },
+      ],
+    },
+    requestSchema: {
+      required: ["service", "time_window"],
+      optional: ["budget_max", "urgency", "notes"],
+    },
+    agentHints:
+      "Electrical work: power tripping, sockets, switches, lights and fittings, wiring. " +
+      "Not air conditioners (ac_maintenance) or appliances. An electrician visits and quotes " +
+      "before the job; the time the user gives is for the visit.",
+    defaultDurationMin: 45,
+    defaultRadiusKm: 20,
+    recurringDefaultDays: null,
+  },
+  {
+    id: "movers",
+    name: "Movers",
+    groupName: "Home services",
+    onboardingSchema: {
+      fields: [
+        { key: "truck_count", type: "number", label: "Number of trucks", required: true },
+        { key: "packing_service", type: "bool", label: "Offer packing", required: true },
+      ],
+    },
+    requestSchema: {
+      required: ["service", "time_window"],
+      optional: ["budget_max", "notes"],
+    },
+    agentHints:
+      "Moving homes and offices, and moving large items between addresses. A surveyor " +
+      "visits to quote, and the mover confirms each request; the time the user gives is " +
+      "for the survey. Assembling or mounting furniture is 'handyman'.",
+    defaultDurationMin: 60,
+    defaultRadiusKm: 30,
+    recurringDefaultDays: null,
   },
 ];
 
@@ -490,5 +561,90 @@ export const CANONICAL_SERVICES: CanonicalServiceSeed[] = [
     name: "Car AC Regas",
     aliases: ["car ac", "car aircon", "car cooling"],
     durationMin:60,
+  },
+
+  // --- laundry ------------------------------------------------------------
+  // The duration is each of the pickup and the delivery.
+  {
+    id: "wash_and_fold",
+    categoryId: "laundry",
+    name: "Wash & Fold",
+    aliases: ["laundry", "washing", "wash and fold", "clothes washing"],
+    durationMin: 15,
+    unitLabel: "kg",
+    returnAfterHours: 24,
+  },
+  {
+    id: "dry_cleaning",
+    categoryId: "laundry",
+    name: "Dry Cleaning",
+    aliases: ["dry clean", "dry cleaner", "suits", "dresses"],
+    durationMin: 15,
+    unitLabel: "item",
+    returnAfterHours: 48,
+  },
+  {
+    id: "ironing",
+    categoryId: "laundry",
+    name: "Ironing",
+    aliases: ["iron clothes", "pressing", "press shirts"],
+    durationMin: 15,
+    unitLabel: "item",
+    returnAfterHours: 24,
+  },
+
+  // --- electrician --------------------------------------------------------
+  // The duration is the site visit; the job's length comes from the quote.
+  {
+    id: "electrical_fault_repair",
+    categoryId: "electrician",
+    name: "Electrical Fault Repair",
+    aliases: ["power tripping", "trip switch", "short circuit", "no power", "sparking", "flickering lights"],
+    durationMin: 45,
+  },
+  {
+    id: "wiring",
+    categoryId: "electrician",
+    name: "Wiring & Rewiring",
+    aliases: ["rewire", "rewiring", "new wiring", "cables"],
+    durationMin: 60,
+  },
+  {
+    id: "light_installation",
+    categoryId: "electrician",
+    name: "Light & Fixture Installation",
+    aliases: ["chandelier", "ceiling light", "light fitting", "spotlights", "install lights"],
+    durationMin: 30,
+  },
+  {
+    id: "socket_switch_installation",
+    categoryId: "electrician",
+    name: "Socket & Switch Installation",
+    aliases: ["socket", "power outlet", "plug point", "switch", "usb socket"],
+    durationMin: 30,
+  },
+
+  // --- movers -------------------------------------------------------------
+  // The duration is the survey visit.
+  {
+    id: "home_move",
+    categoryId: "movers",
+    name: "Home Move",
+    aliases: ["moving house", "apartment move", "villa move", "relocation", "house shifting"],
+    durationMin: 60,
+  },
+  {
+    id: "office_move",
+    categoryId: "movers",
+    name: "Office Move",
+    aliases: ["office relocation", "commercial move"],
+    durationMin: 60,
+  },
+  {
+    id: "item_move",
+    categoryId: "movers",
+    name: "Single Item Move",
+    aliases: ["move a sofa", "move a fridge", "move furniture", "piano move"],
+    durationMin: 30,
   },
 ];

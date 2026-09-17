@@ -1,4 +1,4 @@
-import { getDb, schema, type LocationMode } from "@personal-agent/core";
+import { getDb, schema, type Confirmation, type LocationMode, type PricingMode } from "@personal-agent/core";
 import { CANONICAL_SERVICES, CATEGORIES, CATEGORY_SERVICE_DEFAULTS } from "@personal-agent/core/seed-data";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -9,6 +9,10 @@ export type CatalogueService = {
   name: string;
   aliases: string[];
   defaultLocationMode: LocationMode;
+  defaultPricingMode: PricingMode;
+  /** per_unit: 'kg', 'item', ... */
+  defaultUnitLabel: string | null;
+  defaultConfirmation: Confirmation;
 };
 
 export type CatalogueCategory = {
@@ -51,7 +55,12 @@ export async function loadCatalogue(): Promise<Catalogue> {
 
   const catalogue = buildCatalogue(
     categoryRows,
-    serviceRows.map((row) => ({ ...row, defaultLocationMode: row.defaultLocationMode as LocationMode })),
+    serviceRows.map((row) => ({
+      ...row,
+      defaultLocationMode: row.defaultLocationMode as LocationMode,
+      defaultPricingMode: row.defaultPricingMode as PricingMode,
+      defaultConfirmation: row.defaultConfirmation as Confirmation,
+    })),
   );
   cached = { loadedAt: Date.now(), catalogue };
   return catalogue;
@@ -66,10 +75,16 @@ export function catalogueFromSeed(): Catalogue {
   const byId = <T extends { id: string }>(a: T, b: T) => a.id.localeCompare(b.id);
   return buildCatalogue(
     [...CATEGORIES].sort(byId),
-    [...CANONICAL_SERVICES].sort(byId).map((service) => ({
-      ...service,
-      defaultLocationMode: service.locationMode ?? CATEGORY_SERVICE_DEFAULTS[service.categoryId]!.locationMode,
-    })),
+    [...CANONICAL_SERVICES].sort(byId).map((service) => {
+      const defaults = CATEGORY_SERVICE_DEFAULTS[service.categoryId]!;
+      return {
+        ...service,
+        defaultLocationMode: service.locationMode ?? defaults.locationMode,
+        defaultPricingMode: service.pricingMode ?? defaults.pricingMode,
+        defaultUnitLabel: service.unitLabel ?? null,
+        defaultConfirmation: service.confirmation ?? defaults.confirmation,
+      };
+    }),
   );
 }
 
@@ -78,9 +93,18 @@ function buildCatalogue(
   serviceRows: CatalogueService[],
 ): Catalogue {
   const services = new Map<string, CatalogueService>(
-    serviceRows.map(({ id, categoryId, name, aliases, defaultLocationMode }) => [
-      id,
-      { id, categoryId, name, aliases, defaultLocationMode },
+    serviceRows.map((row) => [
+      row.id,
+      {
+        id: row.id,
+        categoryId: row.categoryId,
+        name: row.name,
+        aliases: row.aliases,
+        defaultLocationMode: row.defaultLocationMode,
+        defaultPricingMode: row.defaultPricingMode,
+        defaultUnitLabel: row.defaultUnitLabel,
+        defaultConfirmation: row.defaultConfirmation,
+      },
     ]),
   );
 

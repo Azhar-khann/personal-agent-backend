@@ -22,7 +22,7 @@ export * from "./search/availability.js";
 export * from "./search/ranking.js";
 export * from "./search/find-options.js";
 export * from "./search/run-search.js";
-export { OrderError, type OrderErrorCode } from "./orders/common.js";
+export { holdExpiresAt, OrderError, REQUEST_HOLD_MIN, type OrderErrorCode } from "./orders/common.js";
 export * from "./orders/booking.js";
 export * from "./orders/transitions.js";
 export {

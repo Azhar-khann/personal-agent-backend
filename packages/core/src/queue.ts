@@ -65,11 +65,13 @@ export function createRedis(role: "producer" | "worker"): Redis {
 }
 
 let queue: Queue | undefined;
+let producer: Redis | undefined;
 
 /** The queue, for adding jobs. */
 export function getQueue(): Queue {
   if (queue) return queue;
-  queue = new Queue(QUEUE_NAME, { connection: createRedis("producer") });
+  producer = createRedis("producer");
+  queue = new Queue(QUEUE_NAME, { connection: producer });
   queue.on("error", () => {
     // Reported once by the connection's own listener.
   });
@@ -117,5 +119,10 @@ export async function closeQueue(): Promise<void> {
   if (queue) {
     await queue.close();
     queue = undefined;
+  }
+  // BullMQ leaves a connection it was given open, which keeps the process alive.
+  if (producer) {
+    await producer.quit();
+    producer = undefined;
   }
 }

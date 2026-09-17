@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./env": "./src/env.ts",
-    "./db": "./src/db/client.ts"
+    "./db": "./src/db/client.ts",
+    "./seed-data": "./src/db/seed-data.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

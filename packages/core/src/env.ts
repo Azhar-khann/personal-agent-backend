@@ -64,6 +64,12 @@ function findDotenvFile(): string | undefined {
   }
 }
 
+/** Loads the repo-root .env into process.env, for a script that validates its own variables. */
+export function loadDotenvFile(): void {
+  const dotenvPath = findDotenvFile();
+  if (dotenvPath) loadDotenv({ path: dotenvPath });
+}
+
 /**
  * Parses and caches process.env. Throws a readable, aggregated error listing
  * every missing or malformed variable at once, rather than failing on the
@@ -72,8 +78,7 @@ function findDotenvFile(): string | undefined {
 export function loadEnv(): Env {
   if (cached) return cached;
 
-  const dotenvPath = findDotenvFile();
-  if (dotenvPath) loadDotenv({ path: dotenvPath });
+  loadDotenvFile();
 
   const parsed = envSchema.safeParse(process.env);
 

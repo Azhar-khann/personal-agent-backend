@@ -1,0 +1,20 @@
+[
+  { "id": "kings-jbr", "name": "Kings Barbers", "address": "The Walk, JBR", "category": "barber", "services": ["mens_haircut", "beard_trim", "shave", "kids_haircut"] },
+  { "id": "kings-barsha", "name": "Kings Barbers", "address": "Al Barsha 1", "category": "barber", "services": ["mens_haircut", "beard_trim"] },
+  { "id": "kings-auto", "name": "Kings Auto Garage", "address": "Al Quoz Industrial 3", "category": "car_service", "services": ["oil_change", "full_car_service", "brake_service"] },
+  { "id": "fade-factory", "name": "Fade Factory", "address": "Karama", "category": "barber", "services": ["mens_haircut", "beard_trim"] },
+  { "id": "glamour", "name": "Glamour Ladies Salon", "address": "Jumeirah 1", "category": "salon", "services": ["womens_haircut", "hair_colour", "blow_dry", "manicure", "pedicure", "facial"] },
+  { "id": "nail-lab", "name": "The Nail Lab", "address": "Dubai Marina", "category": "salon", "services": ["manicure", "pedicure"] },
+  { "id": "bright-smile", "name": "Bright Smile Dental Clinic", "address": "Business Bay", "category": "dentist", "services": ["dental_checkup", "teeth_cleaning", "filling", "teeth_whitening"] },
+  { "id": "bright-smile-mirdif", "name": "Bright Smile Dental Clinic", "address": "Mirdif", "category": "dentist", "services": ["dental_checkup", "teeth_cleaning", "filling", "teeth_whitening"] },
+  { "id": "smile-studio", "name": "Smile Studio", "address": "Jumeirah Lake Towers", "category": "dentist", "services": ["dental_checkup", "teeth_whitening"] },
+  { "id": "marina-dental", "name": "Marina Dental Centre", "address": "Dubai Marina", "category": "dentist", "services": ["dental_checkup", "teeth_cleaning", "filling", "tooth_extraction"] },
+  { "id": "coolair", "name": "CoolAir Technical Services", "address": "Al Quoz", "category": "ac_maintenance", "services": ["ac_servicing", "ac_gas_refill", "ac_repair"] },
+  { "id": "arctic-breeze", "name": "Arctic Breeze AC", "address": "Deira", "category": "ac_maintenance", "services": ["ac_servicing", "duct_cleaning"] },
+  { "id": "quickfix", "name": "QuickFix Plumbing", "address": "Al Nahda", "category": "plumber", "services": ["leak_repair", "drain_unblocking", "tap_toilet_repair"] },
+  { "id": "aquapro", "name": "AquaPro Plumbing", "address": "Jumeirah Lake Towers", "category": "plumber", "services": ["leak_repair", "water_heater", "water_tank_cleaning"] },
+  { "id": "handy-andy", "name": "Handy Andy Dubai", "address": "Mirdif", "category": "handyman", "services": ["furniture_assembly", "tv_wall_mounting", "curtain_installation", "door_lock_repair"] },
+  { "id": "fix-it-fast", "name": "Fix It Fast", "address": "Al Barsha 2", "category": "handyman", "services": ["painting", "door_lock_repair", "tv_wall_mounting"] },
+  { "id": "desert-auto", "name": "Desert Auto Care", "address": "Al Quoz Industrial 1", "category": "car_service", "services": ["oil_change", "full_car_service", "tyre_replacement", "battery_replacement", "brake_service", "car_ac_regas"] },
+  { "id": "speedy-tyres", "name": "Speedy Tyres & Batteries", "address": "Al Qusais", "category": "car_service", "services": ["tyre_replacement", "battery_replacement"] }
+]

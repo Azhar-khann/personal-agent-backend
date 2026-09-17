@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "build": "tsc"
+    "build": "tsc",
+    "evals": "tsx src/evals/run.ts",
+    "metrics": "tsx src/metrics.ts"
   },
   "dependencies": {
     "@clerk/express": "^2.1.67",

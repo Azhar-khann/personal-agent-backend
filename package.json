@@ -11,6 +11,8 @@
     "build": "pnpm -r build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "evals": "pnpm --filter @personal-agent/api evals",
+    "metrics": "pnpm --filter @personal-agent/api metrics",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:logs": "docker compose logs -f",

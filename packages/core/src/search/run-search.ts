@@ -103,7 +103,11 @@ export async function runSearch(searchId: string, now = new Date()): Promise<Fin
 
     await tx
       .update(searches)
-      .set({ status: result.options.length > 0 ? "presenting" : "no_results", updatedAt: now })
+      .set({
+        status: result.options.length > 0 ? "presenting" : "no_results",
+        businessesMatched: result.matched,
+        updatedAt: now,
+      })
       .where(eq(searches.id, searchId));
   });
 

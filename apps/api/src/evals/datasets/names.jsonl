@@ -1,0 +1,60 @@
+{"id": "names-001", "message": "book me at Fade Factory for a haircut tomorrow", "expected": {"outcome": "found", "business": "fade-factory"}}
+{"id": "names-002", "message": "CoolAir Technical Services for an AC service", "expected": {"outcome": "found", "business": "coolair"}}
+{"id": "names-003", "message": "can I get a manicure at The Nail Lab", "expected": {"outcome": "found", "business": "nail-lab"}}
+{"id": "names-004", "message": "Glamour Ladies Salon, blow dry saturday", "expected": {"outcome": "found", "business": "glamour"}}
+{"id": "names-005", "message": "Marina Dental Centre checkup", "expected": {"outcome": "found", "business": "marina-dental"}}
+{"id": "names-006", "message": "I want QuickFix Plumbing to unblock my drain", "expected": {"outcome": "found", "business": "quickfix"}}
+{"id": "names-007", "message": "AquaPro for my water heater", "expected": {"outcome": "found", "business": "aquapro"}}
+{"id": "names-008", "message": "Handy Andy to assemble a wardrobe", "expected": {"outcome": "found", "business": "handy-andy"}}
+{"id": "names-009", "message": "Fix It Fast for painting", "expected": {"outcome": "found", "business": "fix-it-fast"}}
+{"id": "names-010", "message": "Desert Auto Care oil change", "expected": {"outcome": "found", "business": "desert-auto"}}
+{"id": "names-011", "message": "Speedy Tyres, new tyres please", "expected": {"outcome": "found", "business": "speedy-tyres"}}
+{"id": "names-012", "message": "Arctic Breeze AC duct cleaning", "expected": {"outcome": "found", "business": "arctic-breeze"}}
+{"id": "names-013", "message": "Kings Auto Garage brake service", "expected": {"outcome": "found", "business": "kings-auto"}}
+{"id": "names-014", "message": "coolair gas refill", "expected": {"outcome": "found", "business": "coolair"}}
+{"id": "names-015", "message": "book Glamour for hair colour", "expected": {"outcome": "found", "business": "glamour"}}
+{"id": "names-016", "message": "Kings for an oil change", "expected": {"outcome": "found", "business": "kings-auto"}, "note": "'Kings' matches three businesses; only one does car service."}
+{"id": "names-017", "message": "Speedy Tyres & Batteries, my battery is dead", "expected": {"outcome": "found", "business": "speedy-tyres"}}
+{"id": "names-018", "message": "Is Handy Andy Dubai free to mount a TV tomorrow?", "expected": {"outcome": "found", "business": "handy-andy"}}
+{"id": "names-019", "message": "Smile Studio whitening", "expected": {"outcome": "found", "business": "smile-studio"}}
+{"id": "names-020", "message": "Kings Barbers in JBR for a haircut", "expected": {"outcome": "found", "business": "kings-jbr"}, "note": "The user named the branch. Labelled with what the user should get; today's name matching can't get there yet, so this fails until it can."}
+{"id": "names-021", "message": "Handy Andys for curtains", "expected": {"outcome": "found", "business": "handy-andy"}, "note": "A typo of Handy Andy. Labelled with what the user should get; today's name matching can't get there yet, so this fails until it can."}
+{"id": "names-022", "message": "Kings Barbers haircut saturday", "expected": {"outcome": "branches"}}
+{"id": "names-023", "message": "book a beard trim at Kings Barbers", "expected": {"outcome": "branches"}}
+{"id": "names-024", "message": "Kings Barbers", "expected": {"outcome": "branches"}}
+{"id": "names-025", "message": "haircut at Kings", "expected": {"outcome": "branches"}, "note": "'Kings' also matches Kings Auto Garage, but a haircut settles it to the two barbers."}
+{"id": "names-026", "message": "Kings Barbers shave tomorrow", "expected": {"outcome": "branches"}}
+{"id": "names-027", "message": "Kings Barber for my son's haircut", "expected": {"outcome": "branches"}}
+{"id": "names-028", "message": "Bright Smile Dental for teeth cleaning", "expected": {"outcome": "branches"}}
+{"id": "names-029", "message": "Bright Smile checkup", "expected": {"outcome": "branches"}}
+{"id": "names-030", "message": "book Bright Smile Dental Clinic, whitening", "expected": {"outcome": "branches"}}
+{"id": "names-031", "message": "book Frosty AC for a service", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-032", "message": "Gents Corner barber, haircut tomorrow", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-033", "message": "Blue Wave Plumbing, leak repair", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-034", "message": "I want Pearl Dental Clinic for a checkup", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-035", "message": "Luxe Nails for gel nails", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-036", "message": "Al Noor Auto Workshop oil change", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-037", "message": "Mr Fix to hang shelves", "expected": {"outcome": "not_signed_up"}, "note": "Close to Fix It Fast and QuickFix, but a different business."}
+{"id": "names-038", "message": "can Cool Breeze Technical do my AC", "expected": {"outcome": "not_signed_up"}, "note": "Close to CoolAir and Arctic Breeze, but a different business."}
+{"id": "names-039", "message": "Kingsway Dental for whitening", "expected": {"outcome": "not_signed_up"}, "note": "Starts like Kings, but a different business."}
+{"id": "names-040", "message": "Tyre Hub, puncture", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-041", "message": "Serenity Spa Salon blow dry", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-042", "message": "Style Avenue for a haircut", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-043", "message": "AC Doctor to fix my aircon", "expected": {"outcome": "not_signed_up"}}
+{"id": "names-044", "message": "Speedy Plumbing for a leak", "expected": {"outcome": "not_signed_up"}, "note": "Starts like Speedy Tyres, but a different business."}
+{"id": "names-045", "message": "Arctic Breeze AC gas refill", "expected": {"outcome": "doesnt_offer", "business": "arctic-breeze"}}
+{"id": "names-046", "message": "tooth extraction at Smile Studio", "expected": {"outcome": "doesnt_offer", "business": "smile-studio"}}
+{"id": "names-047", "message": "Fade Factory shave", "expected": {"outcome": "doesnt_offer", "business": "fade-factory"}}
+{"id": "names-048", "message": "The Nail Lab facial", "expected": {"outcome": "doesnt_offer", "business": "nail-lab"}}
+{"id": "names-049", "message": "QuickFix Plumbing water tank cleaning", "expected": {"outcome": "doesnt_offer", "business": "quickfix"}}
+{"id": "names-050", "message": "Speedy Tyres oil change", "expected": {"outcome": "doesnt_offer", "business": "speedy-tyres"}}
+{"id": "names-051", "message": "Fix It Fast furniture assembly", "expected": {"outcome": "doesnt_offer", "business": "fix-it-fast"}}
+{"id": "names-052", "message": "CoolAir duct cleaning", "expected": {"outcome": "doesnt_offer", "business": "coolair"}}
+{"id": "names-053", "message": "barber in JBR tomorrow", "expected": {"outcome": "no_business_named"}}
+{"id": "names-054", "message": "dentist near Dubai Marina", "expected": {"outcome": "no_business_named"}, "note": "'Marina' is the area, even though Marina Dental Centre exists."}
+{"id": "names-055", "message": "oil change for my Toyota", "expected": {"outcome": "no_business_named"}, "note": "Toyota is the car, not a business."}
+{"id": "names-056", "message": "a plumber to my flat near Dubai Mall", "expected": {"outcome": "no_business_named"}}
+{"id": "names-057", "message": "a good AC company please", "expected": {"outcome": "no_business_named"}}
+{"id": "names-058", "message": "the cheapest barber", "expected": {"outcome": "no_business_named"}}
+{"id": "names-059", "message": "same salon as last time for a blow dry", "expected": {"outcome": "no_business_named"}, "note": "No earlier bookings in an eval."}
+{"id": "names-060", "message": "handyman in Mirdif", "expected": {"outcome": "no_business_named"}}

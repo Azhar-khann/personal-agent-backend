@@ -1,4 +1,5 @@
 import { getDb, schema, type LocationMode } from "@personal-agent/core";
+import { CANONICAL_SERVICES, CATEGORIES, CATEGORY_SERVICE_DEFAULTS } from "@personal-agent/core/seed-data";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -48,16 +49,38 @@ export async function loadCatalogue(): Promise<Catalogue> {
     db.select().from(canonicalServices).where(eq(canonicalServices.active, true)).orderBy(asc(canonicalServices.id)),
   ]);
 
+  const catalogue = buildCatalogue(
+    categoryRows,
+    serviceRows.map((row) => ({ ...row, defaultLocationMode: row.defaultLocationMode as LocationMode })),
+  );
+  cached = { loadedAt: Date.now(), catalogue };
+  return catalogue;
+}
+
+/**
+ * The catalogue straight from the seed file, with no database — for the
+ * evals. Sorted by id as loadCatalogue's query is, so the model sees the same
+ * prompt it gets in production.
+ */
+export function catalogueFromSeed(): Catalogue {
+  const byId = <T extends { id: string }>(a: T, b: T) => a.id.localeCompare(b.id);
+  return buildCatalogue(
+    [...CATEGORIES].sort(byId),
+    [...CANONICAL_SERVICES].sort(byId).map((service) => ({
+      ...service,
+      defaultLocationMode: service.locationMode ?? CATEGORY_SERVICE_DEFAULTS[service.categoryId]!.locationMode,
+    })),
+  );
+}
+
+function buildCatalogue(
+  categoryRows: { id: string; name: string; agentHints: string | null; requestSchema: unknown }[],
+  serviceRows: CatalogueService[],
+): Catalogue {
   const services = new Map<string, CatalogueService>(
-    serviceRows.map((row) => [
-      row.id,
-      {
-        id: row.id,
-        categoryId: row.categoryId,
-        name: row.name,
-        aliases: row.aliases,
-        defaultLocationMode: row.defaultLocationMode as LocationMode,
-      },
+    serviceRows.map(({ id, categoryId, name, aliases, defaultLocationMode }) => [
+      id,
+      { id, categoryId, name, aliases, defaultLocationMode },
     ]),
   );
 
@@ -74,11 +97,9 @@ export async function loadCatalogue(): Promise<Catalogue> {
   });
   const byId = new Map(list.map((category) => [category.id, category]));
 
-  const catalogue: Catalogue = {
+  return {
     categories: list,
     category: (id) => (id ? byId.get(id) : undefined),
     service: (id) => (id ? services.get(id) : undefined),
   };
-  cached = { loadedAt: Date.now(), catalogue };
-  return catalogue;
 }

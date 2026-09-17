@@ -492,6 +492,12 @@ export const searches = pgTable(
       .notNull()
       .default(sql`'{}'::jsonb`),
     status: text("status").notNull().default("gathering"),
+    // For §11's product numbers. How many businesses passed the filter step on
+    // the latest search, which tells "nobody nearby" from "nobody free" for a
+    // no_results search; and how many booking attempts hit a time already gone
+    // (the 409).
+    businessesMatched: integer("businesses_matched"),
+    slotConflicts: integer("slot_conflicts").notNull().default(0),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

@@ -1,0 +1,62 @@
+# §11: a change to the prompt or what feeds it runs the eval datasets, and the
+# build fails if any score drops more than 3 points against the last run on main.
+# Run by hand with a list of models for the quality-against-cost table.
+name: Evals
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/api/src/agent/understand.ts
+      - apps/api/src/agent/catalogue.ts
+      - apps/api/src/agent/names.ts
+      - apps/api/src/evals/**
+      - packages/core/src/db/seed-data.ts
+      - packages/core/src/time.ts
+      - .github/workflows/evals.yml
+  pull_request:
+    paths:
+      - apps/api/src/agent/understand.ts
+      - apps/api/src/agent/catalogue.ts
+      - apps/api/src/agent/names.ts
+      - apps/api/src/evals/**
+      - packages/core/src/db/seed-data.ts
+      - packages/core/src/time.ts
+      - .github/workflows/evals.yml
+  workflow_dispatch:
+    inputs:
+      models:
+        description: Comma-separated models to compare, e.g. gpt-5.6-luna,gpt-4.1-mini. Empty runs the normal gate.
+        required: false
+
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LANGSMITH_API_KEY: ${{ secrets.LANGSMITH_API_KEY }}
+      # Datasets and experiments get this project's resource tags.
+      LANGSMITH_PROJECT: personal agent
+      MODELS: ${{ inputs.models }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run evals
+        run: |
+          if [ -n "$MODELS" ]; then
+            pnpm evals --models "$MODELS"
+          else
+            pnpm evals
+          fi

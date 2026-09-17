@@ -1,0 +1,200 @@
+{"id": "category-001", "message": "need a haircut tomorrow, men's", "expected": {"category": "barber"}}
+{"id": "category-002", "message": "Beard trim this evening pls", "expected": {"category": "barber"}}
+{"id": "category-003", "message": "fade and line up", "expected": {"category": "barber"}}
+{"id": "category-004", "message": "where can i get a hot towel shave", "expected": {"category": "barber"}}
+{"id": "category-005", "message": "my son needs a haircut before school starts", "expected": {"category": "barber"}}
+{"id": "category-006", "message": "gents cut + beard", "expected": {"category": "barber"}}
+{"id": "category-007", "message": "skin fade saturday", "expected": {"category": "barber"}}
+{"id": "category-008", "message": "trim my beard and tidy the neckline", "expected": {"category": "barber"}}
+{"id": "category-009", "message": "find me a barber", "expected": {"category": "barber"}}
+{"id": "category-010", "message": "I want a buzz cut", "expected": {"category": "barber"}}
+{"id": "category-011", "message": "can someone shape my beard for my wedding", "expected": {"category": "barber"}}
+{"id": "category-012", "message": "haircut for a 6 year old boy", "expected": {"category": "barber"}}
+{"id": "category-013", "message": "abgha 7allaq bukra", "expected": {"category": "barber"}, "note": "Arabizi: 'I want a barber tomorrow'."}
+{"id": "category-014", "message": "dadhi trim karwani hai", "expected": {"category": "barber"}, "note": "Hindi: 'I need a beard trim'."}
+{"id": "category-015", "message": "clean shave with a straight razor", "expected": {"category": "barber"}}
+{"id": "category-016", "message": "mens haircut, short on the sides", "expected": {"category": "barber"}}
+{"id": "category-017", "message": "I need a quick trim, men's", "expected": {"category": "barber"}}
+{"id": "category-018", "message": "barbar near me", "expected": {"category": "barber"}, "note": "Typo for barber."}
+{"id": "category-019", "message": "get my moustache shaped", "expected": {"category": "barber"}}
+{"id": "category-020", "message": "undercut with a hard part", "expected": {"category": "barber"}}
+{"id": "category-021", "message": "father and son haircuts sunday morning", "expected": {"category": "barber"}}
+{"id": "category-022", "message": "balayage and a blow dry", "expected": {"category": "salon"}}
+{"id": "category-023", "message": "gel nails for friday", "expected": {"category": "salon"}}
+{"id": "category-024", "message": "ladies haircut in jumeirah", "expected": {"category": "salon"}}
+{"id": "category-025", "message": "mani pedi this weekend", "expected": {"category": "salon"}}
+{"id": "category-026", "message": "i want highlights", "expected": {"category": "salon"}}
+{"id": "category-027", "message": "facial appointment", "expected": {"category": "salon"}}
+{"id": "category-028", "message": "blow out for a wedding tonight", "expected": {"category": "salon"}}
+{"id": "category-029", "message": "root touch up, my greys are showing", "expected": {"category": "salon"}}
+{"id": "category-030", "message": "pedicure please", "expected": {"category": "salon"}}
+{"id": "category-031", "message": "cut and colour for my wife", "expected": {"category": "salon"}}
+{"id": "category-032", "message": "eyebrow threading", "expected": {"category": "salon"}, "note": "Not a listed service; salon is the closest category."}
+{"id": "category-033", "message": "waxing appointment", "expected": {"category": "salon"}, "note": "Salon's hints list waxing."}
+{"id": "category-034", "message": "nail extensions", "expected": {"category": "salon"}}
+{"id": "category-035", "message": "keratin treatment for frizzy hair", "expected": {"category": "salon"}}
+{"id": "category-036", "message": "hair spa", "expected": {"category": "salon"}}
+{"id": "category-037", "message": "I need my hair done for a party, curls", "expected": {"category": "salon"}}
+{"id": "category-038", "message": "french manicure", "expected": {"category": "salon"}}
+{"id": "category-039", "message": "my daughter wants her hair braided", "expected": {"category": "salon"}}
+{"id": "category-040", "message": "bridal hair trial", "expected": {"category": "salon"}}
+{"id": "category-041", "message": "deep cleansing facial for oily skin", "expected": {"category": "salon"}}
+{"id": "category-042", "message": "ladies salon, trim only", "expected": {"category": "salon"}}
+{"id": "category-043", "message": "toe nails painted", "expected": {"category": "salon"}}
+{"id": "category-044", "message": "toothache since yesterday", "expected": {"category": "dentist"}}
+{"id": "category-045", "message": "teeth cleaning and polish", "expected": {"category": "dentist"}}
+{"id": "category-046", "message": "i think i have a cavity", "expected": {"category": "dentist"}}
+{"id": "category-047", "message": "wisdom tooth needs to come out", "expected": {"category": "dentist"}}
+{"id": "category-048", "message": "dental checkup for my kids", "expected": {"category": "dentist"}}
+{"id": "category-049", "message": "whitening before my wedding", "expected": {"category": "dentist"}}
+{"id": "category-050", "message": "my filling fell out", "expected": {"category": "dentist"}}
+{"id": "category-051", "message": "my gums bleed when i brush", "expected": {"category": "dentist"}}
+{"id": "category-052", "message": "chipped my front tooth", "expected": {"category": "dentist"}}
+{"id": "category-053", "message": "scaling appointment", "expected": {"category": "dentist"}}
+{"id": "category-054", "message": "dentist that takes daman insurance", "expected": {"category": "dentist"}}
+{"id": "category-055", "message": "sensitive teeth when drinking cold water", "expected": {"category": "dentist"}}
+{"id": "category-056", "message": "need an extraction", "expected": {"category": "dentist"}}
+{"id": "category-057", "message": "routine dental exam", "expected": {"category": "dentist"}}
+{"id": "category-058", "message": "my crown came loose", "expected": {"category": "dentist"}}
+{"id": "category-059", "message": "braces consultation", "expected": {"category": "dentist"}}
+{"id": "category-060", "message": "swollen jaw and tooth pain", "expected": {"category": "dentist"}}
+{"id": "category-061", "message": "hygienist appointment", "expected": {"category": "dentist"}}
+{"id": "category-062", "message": "daant mein dard hai", "expected": {"category": "dentist"}, "note": "Hindi: 'I have tooth pain'."}
+{"id": "category-063", "message": "my kid's baby tooth is wobbly and hurting", "expected": {"category": "dentist"}}
+{"id": "category-064", "message": "yellow teeth, want them cleaned", "expected": {"category": "dentist"}}
+{"id": "category-065", "message": "root canal", "expected": {"category": "dentist"}, "note": "Not a listed service, but only a dentist does it."}
+{"id": "category-066", "message": "AC not cooling", "expected": {"category": "ac_maintenance"}, "note": "No car mentioned, so the home AC."}
+{"id": "category-067", "message": "aircon service for 3 units", "expected": {"category": "ac_maintenance"}}
+{"id": "category-068", "message": "AC is dripping water inside the bedroom", "expected": {"category": "ac_maintenance"}, "note": "Water, but from the AC unit: AC maintenance, not plumber."}
+{"id": "category-069", "message": "duct cleaning for my villa", "expected": {"category": "ac_maintenance"}}
+{"id": "category-070", "message": "AC making a loud noise", "expected": {"category": "ac_maintenance"}}
+{"id": "category-071", "message": "gas refill for split ac", "expected": {"category": "ac_maintenance"}}
+{"id": "category-072", "message": "annual AC maintenance", "expected": {"category": "ac_maintenance"}}
+{"id": "category-073", "message": "my ac smells musty", "expected": {"category": "ac_maintenance"}}
+{"id": "category-074", "message": "AC thanda nahi kar raha", "expected": {"category": "ac_maintenance"}, "note": "Hindi: 'the AC isn't cooling'."}
+{"id": "category-075", "message": "the thermostat shows 18 but the room is still hot", "expected": {"category": "ac_maintenance"}}
+{"id": "category-076", "message": "central AC not turning on", "expected": {"category": "ac_maintenance"}}
+{"id": "category-077", "message": "clean the AC filters and coils", "expected": {"category": "ac_maintenance"}}
+{"id": "category-078", "message": "water leaking from the ac unit in the living room", "expected": {"category": "ac_maintenance"}, "note": "A leak, but from the AC unit."}
+{"id": "category-079", "message": "ac compressor keeps tripping", "expected": {"category": "ac_maintenance"}}
+{"id": "category-080", "message": "window ac repair", "expected": {"category": "ac_maintenance"}}
+{"id": "category-081", "message": "service the chiller AC in my apartment", "expected": {"category": "ac_maintenance"}}
+{"id": "category-082", "message": "AC blowing warm air in the flat", "expected": {"category": "ac_maintenance"}}
+{"id": "category-083", "message": "ac servise pls", "expected": {"category": "ac_maintenance"}, "note": "Typo for service."}
+{"id": "category-084", "message": "mould in the air vents", "expected": {"category": "ac_maintenance"}}
+{"id": "category-085", "message": "ice forming on my ac pipes", "expected": {"category": "ac_maintenance"}}
+{"id": "category-086", "message": "the aircon turns on but no air comes out", "expected": {"category": "ac_maintenance"}}
+{"id": "category-087", "message": "pre-summer ac check", "expected": {"category": "ac_maintenance"}}
+{"id": "category-088", "message": "kitchen sink is blocked", "expected": {"category": "plumber"}}
+{"id": "category-089", "message": "leaking pipe under the bathroom sink", "expected": {"category": "plumber"}}
+{"id": "category-090", "message": "no hot water", "expected": {"category": "plumber"}}
+{"id": "category-091", "message": "toilet keeps running", "expected": {"category": "plumber"}}
+{"id": "category-092", "message": "water heater making a banging noise", "expected": {"category": "plumber"}}
+{"id": "category-093", "message": "shower drain is slow", "expected": {"category": "plumber"}}
+{"id": "category-094", "message": "dripping tap", "expected": {"category": "plumber"}}
+{"id": "category-095", "message": "water coming through the ceiling from the upstairs bathroom", "expected": {"category": "plumber"}, "note": "Could be an AC drain, but 'upstairs bathroom' settles it."}
+{"id": "category-096", "message": "clogged toilet", "expected": {"category": "plumber"}}
+{"id": "category-097", "message": "water tank cleaning for villa", "expected": {"category": "plumber"}}
+{"id": "category-098", "message": "low water pressure in the shower", "expected": {"category": "plumber"}}
+{"id": "category-099", "message": "replace a mixer tap in the kitchen", "expected": {"category": "plumber"}}
+{"id": "category-100", "message": "geyser not working", "expected": {"category": "plumber"}}
+{"id": "category-101", "message": "bad smell coming from the drain", "expected": {"category": "plumber"}}
+{"id": "category-102", "message": "the flush button is broken", "expected": {"category": "plumber"}}
+{"id": "category-103", "message": "washing machine outlet pipe leaking", "expected": {"category": "plumber"}}
+{"id": "category-104", "message": "bidet spray leaking", "expected": {"category": "plumber"}}
+{"id": "category-105", "message": "burst pipe in the villa garden", "expected": {"category": "plumber"}}
+{"id": "category-106", "message": "plumbr needed urgently", "expected": {"category": "plumber"}, "note": "Typo for plumber."}
+{"id": "category-107", "message": "water meter keeps running even with all taps off", "expected": {"category": "plumber"}, "note": "A hidden leak."}
+{"id": "category-108", "message": "boiler leaking", "expected": {"category": "plumber"}}
+{"id": "category-109", "message": "floor drain overflowing in the bathroom", "expected": {"category": "plumber"}}
+{"id": "category-110", "message": "fix the cistern, it won't fill", "expected": {"category": "plumber"}}
+{"id": "category-111", "message": "damp patch spreading on the wall next to the shower", "expected": {"category": "plumber"}, "note": "Water from behind a shower wall: plumber."}
+{"id": "category-112", "message": "assemble an ikea wardrobe", "expected": {"category": "handyman"}}
+{"id": "category-113", "message": "mount a 65 inch tv on the wall", "expected": {"category": "handyman"}}
+{"id": "category-114", "message": "paint my living room", "expected": {"category": "handyman"}}
+{"id": "category-115", "message": "front door lock is jammed", "expected": {"category": "handyman"}}
+{"id": "category-116", "message": "hang curtains in 3 rooms", "expected": {"category": "handyman"}}
+{"id": "category-117", "message": "put up some shelves", "expected": {"category": "handyman"}}
+{"id": "category-118", "message": "fix a squeaky door hinge", "expected": {"category": "handyman"}}
+{"id": "category-119", "message": "hang a big mirror and some frames", "expected": {"category": "handyman"}}
+{"id": "category-120", "message": "install blinds", "expected": {"category": "handyman"}}
+{"id": "category-121", "message": "kitchen cabinet door fell off", "expected": {"category": "handyman"}}
+{"id": "category-122", "message": "patch holes in the wall and touch up the paint", "expected": {"category": "handyman"}}
+{"id": "category-123", "message": "put together a bunk bed", "expected": {"category": "handyman"}}
+{"id": "category-124", "message": "wardrobe sliding door came off its track", "expected": {"category": "handyman"}}
+{"id": "category-125", "message": "change the handle on my bedroom door", "expected": {"category": "handyman"}}
+{"id": "category-126", "message": "drill holes for a tv bracket", "expected": {"category": "handyman"}}
+{"id": "category-127", "message": "fix a wobbly table", "expected": {"category": "handyman"}}
+{"id": "category-128", "message": "install a baby gate on the stairs", "expected": {"category": "handyman"}}
+{"id": "category-129", "message": "put up a curtain rail", "expected": {"category": "handyman"}}
+{"id": "category-130", "message": "repaint the kids room blue", "expected": {"category": "handyman"}}
+{"id": "category-131", "message": "replace the lock on the balcony door", "expected": {"category": "handyman"}}
+{"id": "category-132", "message": "few odd jobs around the house", "expected": {"category": "handyman"}, "note": "Odd jobs is handyman's own description."}
+{"id": "category-133", "message": "assemble garden furniture", "expected": {"category": "handyman"}}
+{"id": "category-134", "message": "fix loose tiles in the hallway", "expected": {"category": "handyman"}, "note": "No water involved."}
+{"id": "category-135", "message": "bathroom door swelled up and won't close", "expected": {"category": "handyman"}, "note": "Water may have caused it, but the job is the door."}
+{"id": "category-136", "message": "oil change for my Nissan Patrol", "expected": {"category": "car_service"}}
+{"id": "category-137", "message": "car battery dead", "expected": {"category": "car_service"}}
+{"id": "category-138", "message": "flat tyre", "expected": {"category": "car_service"}}
+{"id": "category-139", "message": "brakes squeaking", "expected": {"category": "car_service"}}
+{"id": "category-140", "message": "car AC not cooling", "expected": {"category": "car_service"}, "note": "Car AC, not home AC."}
+{"id": "category-141", "message": "full service at 60,000 km", "expected": {"category": "car_service"}}
+{"id": "category-142", "message": "new tyres for my Prado", "expected": {"category": "car_service"}}
+{"id": "category-143", "message": "car won't start in the morning", "expected": {"category": "car_service"}}
+{"id": "category-144", "message": "brake pads replacement", "expected": {"category": "car_service"}}
+{"id": "category-145", "message": "pre purchase inspection for a used car", "expected": {"category": "car_service"}}
+{"id": "category-146", "message": "my car needs its annual service", "expected": {"category": "car_service"}}
+{"id": "category-147", "message": "check engine light is on", "expected": {"category": "car_service"}}
+{"id": "category-148", "message": "car regas", "expected": {"category": "car_service"}}
+{"id": "category-149", "message": "puncture repair", "expected": {"category": "car_service"}}
+{"id": "category-150", "message": "engine oil and filter change", "expected": {"category": "car_service"}}
+{"id": "category-151", "message": "wheel alignment", "expected": {"category": "car_service"}}
+{"id": "category-152", "message": "grinding noise when I brake", "expected": {"category": "car_service"}}
+{"id": "category-153", "message": "car registration renewal test", "expected": {"category": "car_service"}, "note": "Car service's hints include registration testing."}
+{"id": "category-154", "message": "my Tesla needs new tyres", "expected": {"category": "car_service"}}
+{"id": "category-155", "message": "jump start my car in the parking", "expected": {"category": "car_service"}}
+{"id": "category-156", "message": "gaadi ki service karwani hai", "expected": {"category": "car_service"}, "note": "Hindi: 'I need to get the car serviced'."}
+{"id": "category-157", "message": "AC in my car blows hot air", "expected": {"category": "car_service"}, "note": "Car AC, not home AC."}
+{"id": "category-158", "message": "something is leaking in my kitchen", "expected": {"ask": ["handyman", "plumber"]}, "note": "The prompt's own example: a leak could need either."}
+{"id": "category-159", "message": "bathroom needs fixing", "expected": {"ask": ["handyman", "plumber"]}}
+{"id": "category-160", "message": "the cabinet under the bathroom sink is damaged and wet", "expected": {"ask": ["handyman", "plumber"]}, "note": "Cabinet (handyman) or the leak wetting it (plumber)."}
+{"id": "category-161", "message": "need someone to sort out the kitchen sink area", "expected": {"ask": ["handyman", "plumber"]}}
+{"id": "category-162", "message": "install a new washing machine", "expected": {"ask": ["handyman", "plumber"]}, "note": "Water hookup (plumber) or just fitting (handyman)."}
+{"id": "category-163", "message": "install a dishwasher", "expected": {"ask": ["handyman", "plumber"]}}
+{"id": "category-164", "message": "someone to fix things at my place", "expected": {"ask": ["handyman", "plumber"]}, "note": "Too vague: every home category could fit; at least these two."}
+{"id": "category-165", "message": "home maintenance visit please", "expected": {"ask": ["handyman", "plumber"]}, "note": "Too vague; at least these two."}
+{"id": "category-166", "message": "something's broken in the kitchen", "expected": {"ask": ["handyman", "plumber"]}}
+{"id": "category-167", "message": "painting and plumbing work in my new flat", "expected": {"ask": ["handyman", "plumber"]}, "note": "Two jobs; the agent books one at a time, so it should ask which first."}
+{"id": "category-168", "message": "doors and taps need fixing", "expected": {"ask": ["handyman", "plumber"]}, "note": "Two jobs."}
+{"id": "category-169", "message": "banging noise inside the wall", "expected": {"ask": ["handyman", "plumber"]}, "note": "Could be pipes."}
+{"id": "category-170", "message": "the silicone around the bathtub is mouldy", "expected": {"ask": ["handyman", "plumber"]}}
+{"id": "category-171", "message": "fix up my flat before I move out", "expected": {"ask": ["handyman", "plumber"]}}
+{"id": "category-172", "message": "water damage on the ceiling", "expected": {"ask": ["ac_maintenance", "plumber"]}, "note": "In Dubai this is often an AC drain line as much as a pipe."}
+{"id": "category-173", "message": "the ceiling is dripping", "expected": {"ask": ["ac_maintenance", "plumber"]}, "note": "AC drain or pipe."}
+{"id": "category-174", "message": "I need a haircut", "expected": {"ask": ["barber", "salon"]}, "note": "No gender given. 'haircut' is an alias of Men's Haircut — decide whether the agent should assume barber instead."}
+{"id": "category-175", "message": "hair appointment tomorrow", "expected": {"ask": ["barber", "salon"]}}
+{"id": "category-176", "message": "need a trim", "expected": {"ask": ["barber", "salon"]}, "note": "'trim' is an alias of Men's Haircut — same question as 'I need a haircut'."}
+{"id": "category-177", "message": "a haircut and a hair wash", "expected": {"ask": ["barber", "salon"]}}
+{"id": "category-178", "message": "grooming appointment", "expected": {"ask": ["barber", "salon"]}}
+{"id": "category-179", "message": "cleaning appointment", "expected": {"ask": ["ac_maintenance", "dentist"]}, "note": "'cleaning' is an alias of teeth cleaning and of AC cleaning."}
+{"id": "category-180", "message": "the AC needs a regas", "expected": {"ask": ["ac_maintenance", "car_service"]}, "note": "Home AC gas refill or car AC regas."}
+{"id": "category-181", "message": "I need a service booked", "expected": {"ask": ["ac_maintenance", "car_service"]}, "note": "Too vague; the recurring 'service' categories at least."}
+{"id": "category-182", "message": "book me a flight to London", "expected": {"unsupported": true}}
+{"id": "category-183", "message": "I need a lawyer for a rental dispute", "expected": {"unsupported": true}}
+{"id": "category-184", "message": "table for two at a restaurant tonight", "expected": {"unsupported": true}}
+{"id": "category-185", "message": "house cleaning maid for 4 hours", "expected": {"unsupported": true}, "note": "No cleaning category."}
+{"id": "category-186", "message": "pest control for cockroaches", "expected": {"unsupported": true}}
+{"id": "category-187", "message": "electrician to rewire the kitchen", "expected": {"unsupported": true}, "note": "No electrical category; handyman's hints say to prefer a specific category for electrical work."}
+{"id": "category-188", "message": "vet appointment for my cat", "expected": {"unsupported": true}}
+{"id": "category-189", "message": "see a GP about a fever", "expected": {"unsupported": true}}
+{"id": "category-190", "message": "physiotherapy for back pain", "expected": {"unsupported": true}}
+{"id": "category-191", "message": "personal trainer at the gym", "expected": {"unsupported": true}}
+{"id": "category-192", "message": "laundry pickup", "expected": {"unsupported": true}, "note": "Laundry is a Stage 9 pickup/delivery example, not in the catalogue yet."}
+{"id": "category-193", "message": "movers for a 2 bedroom apartment", "expected": {"unsupported": true}}
+{"id": "category-194", "message": "maths tutor for my son", "expected": {"unsupported": true}}
+{"id": "category-195", "message": "wedding photographer", "expected": {"unsupported": true}}
+{"id": "category-196", "message": "rent a car for the weekend", "expected": {"unsupported": true}}
+{"id": "category-197", "message": "full body massage", "expected": {"unsupported": true}, "note": "No spa category; salon's hints don't list massage."}
+{"id": "category-198", "message": "my washing machine won't spin", "expected": {"unsupported": true}, "note": "Appliance repair isn't in the catalogue."}
+{"id": "category-199", "message": "eye test for new glasses", "expected": {"unsupported": true}}
+{"id": "category-200", "message": "dog grooming", "expected": {"unsupported": true}, "note": "Not the barber."}

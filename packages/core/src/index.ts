@@ -1,4 +1,4 @@
-export { loadEnv, resetEnvForTesting, type Env } from "./env.js";
+export { loadDotenvFile, loadEnv, resetEnvForTesting, type Env } from "./env.js";
 export {
   getDb,
   getSql,

@@ -1,14 +1,15 @@
+import { describeNow, formatWindow, toLocal, type AgentState } from "@personal-agent/core";
+import { wrapOpenAI } from "langsmith/wrappers/openai";
 import OpenAI from "openai";
 import { zodTextFormat } from "openai/helpers/zod";
-import { wrapOpenAI } from "langsmith/wrappers/openai";
 import { z } from "zod";
 
-import type { ApiEnv } from "../env.js";
+import type { ModelConfig } from "../env.js";
+import { usesReasoning, type TokenUsage } from "./models.js";
 import type { SearchViewOption } from "../search-view.js";
 import type { Catalogue } from "./catalogue.js";
 import type { UpcomingOrder } from "./lookups.js";
-import type { AgentState } from "@personal-agent/core";
-import { describeNow, formatWindow, toLocal } from "@personal-agent/core";
+import { lettersAndDigits } from "./names.js";
 
 /**
  * What one user message means, from a single structured model call.
@@ -59,7 +60,7 @@ export type UnderstandContext = {
 let client: OpenAI | undefined;
 
 /** Traced by LangSmith: each call shows up with its model, prompt and token usage. */
-function openai(env: ApiEnv) {
+function openai(env: ModelConfig) {
   client ??= wrapOpenAI(new OpenAI({ apiKey: env.OPENAI_API_KEY, timeout: 20_000, maxRetries: 1 }));
   return client;
 }
@@ -184,9 +185,20 @@ function given(value: string | null): string | null {
   return bare === "" || ["null", "none", "na", "undefined", "unknown"].includes(bare) ? null : trimmed;
 }
 
+/**
+ * The same for numbers: seen in the evals as budget_max_aed 0 for a message
+ * with no budget. No budget is 0 AED, and choices, options and orders are
+ * numbered from 1.
+ */
+const positive = (value: number | null) => (value !== null && value > 0 ? value : null);
+
 export function withoutPlaceholders(u: Understanding): Understanding {
   return {
     ...u,
+    budget_max_aed: positive(u.budget_max_aed),
+    choice_number: positive(u.choice_number),
+    option_number: positive(u.option_number),
+    order_number: positive(u.order_number),
     category_id: given(u.category_id),
     category_candidates: u.category_candidates.flatMap((id) => given(id) ?? []),
     service_id: given(u.service_id),
@@ -198,8 +210,6 @@ export function withoutPlaceholders(u: Understanding): Understanding {
     reply: given(u.reply),
   };
 }
-
-const lettersAndDigits = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /**
  * Which numbered choice the model meant when it copied a choice's label
@@ -224,17 +234,17 @@ export function choiceFromLabel(labels: string[], u: Understanding): number | nu
 export type UnderstandResult = {
   understanding: Understanding;
   model: string;
-  usage: { inputTokens: number; outputTokens: number } | null;
+  usage: TokenUsage | null;
 };
 
 export async function understand(
-  env: ApiEnv,
+  env: ModelConfig,
   catalogue: Catalogue,
   context: UnderstandContext,
 ): Promise<UnderstandResult> {
   const response = await openai(env).responses.parse({
     model: env.AGENT_MODEL,
-    reasoning: { effort: env.AGENT_REASONING_EFFORT },
+    ...(usesReasoning(env.AGENT_MODEL) ? { reasoning: { effort: env.AGENT_REASONING_EFFORT } } : {}),
     input: [
       { role: "system", content: instructions(catalogue) },
       { role: "user", content: situation(context, catalogue) },
@@ -249,7 +259,11 @@ export async function understand(
     understanding: withoutPlaceholders(response.output_parsed),
     model: response.model,
     usage: response.usage
-      ? { inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens }
+      ? {
+          inputTokens: response.usage.input_tokens,
+          cachedInputTokens: response.usage.input_tokens_details?.cached_tokens ?? 0,
+          outputTokens: response.usage.output_tokens,
+        }
       : null,
   };
 }

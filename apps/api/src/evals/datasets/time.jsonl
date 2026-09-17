@@ -1,0 +1,100 @@
+{"id": "time-001", "message": "haircut tomorrow at 3pm", "expected": {"window": {"start": "2026-09-18T14:45", "end": "2026-09-18T15:15"}}}
+{"id": "time-002", "message": "dentist today at 5pm", "expected": {"window": {"start": "2026-09-17T16:45", "end": "2026-09-17T17:15"}}}
+{"id": "time-003", "message": "AC service this afternoon", "expected": {"window": {"start": "2026-09-17T12:00", "end": "2026-09-17T17:00"}}}
+{"id": "time-004", "message": "plumber tomorrow morning", "expected": {"window": {"start": "2026-09-18T08:00", "end": "2026-09-18T12:00"}}}
+{"id": "time-005", "message": "manicure on Saturday", "expected": {"window": {"start": "2026-09-19T00:00", "end": "2026-09-19T23:59"}}}
+{"id": "time-006", "message": "oil change tonight", "expected": {"window": {"start": "2026-09-17T18:00", "end": "2026-09-17T23:59"}}}
+{"id": "time-007", "message": "handyman tomorrow evening", "expected": {"window": {"start": "2026-09-18T17:00", "end": "2026-09-18T21:00"}}}
+{"id": "time-008", "message": "blocked drain, asap", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-17T14:00"}}}
+{"id": "time-009", "message": "beard trim right now", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-17T14:00"}}, "note": "'now' is read like asap: now until four hours from now."}
+{"id": "time-010", "message": "car battery this week sometime", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-20T23:59"}}}
+{"id": "time-011", "message": "facial on Monday", "expected": {"window": {"start": "2026-09-21T00:00", "end": "2026-09-21T23:59"}}}
+{"id": "time-012", "message": "teeth cleaning Sunday evening", "expected": {"window": {"start": "2026-09-20T17:00", "end": "2026-09-20T21:00"}}}
+{"id": "time-013", "message": "tv mounting Wednesday at 2pm", "expected": {"window": {"start": "2026-09-23T13:45", "end": "2026-09-23T14:15"}}}
+{"id": "time-014", "message": "dentist this morning", "expected": {"window": {"start": "2026-09-17T08:00", "end": "2026-09-17T12:00"}}, "note": "Already under way, so the agent searches from now; 10:00–12:00 scores the same."}
+{"id": "time-015", "message": "plumber today", "expected": {"window": {"start": "2026-09-17T00:00", "end": "2026-09-17T23:59"}}, "note": "Already under way; now–23:59 scores the same."}
+{"id": "time-016", "message": "shave this Sunday at 9pm", "expected": {"window": {"start": "2026-09-20T20:45", "end": "2026-09-20T21:15"}}}
+{"id": "time-017", "message": "ac repair Saturday afternoon", "expected": {"window": {"start": "2026-09-19T12:00", "end": "2026-09-19T17:00"}}}
+{"id": "time-018", "message": "tyre change Monday morning", "expected": {"window": {"start": "2026-09-21T08:00", "end": "2026-09-21T12:00"}}}
+{"id": "time-019", "message": "mount tv Tuesday evening", "expected": {"window": {"start": "2026-09-22T17:00", "end": "2026-09-22T21:00"}}}
+{"id": "time-020", "message": "manicure in the evening on Wednesday", "expected": {"window": {"start": "2026-09-23T17:00", "end": "2026-09-23T21:00"}}}
+{"id": "time-021", "message": "oil change sometime tomorrow", "expected": {"window": {"start": "2026-09-18T00:00", "end": "2026-09-18T23:59"}}}
+{"id": "time-022", "message": "dentist on Friday morning", "expected": {"window": {"start": "2026-09-18T08:00", "end": "2026-09-18T12:00"}}, "note": "Friday is tomorrow."}
+{"id": "time-023", "message": "shave Friday at 1pm", "expected": {"window": {"start": "2026-09-18T12:45", "end": "2026-09-18T13:15"}}}
+{"id": "time-024", "message": "plumber sometime Sunday morning", "expected": {"window": {"start": "2026-09-20T08:00", "end": "2026-09-20T12:00"}}}
+{"id": "time-025", "message": "ac service asap please, it's boiling", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-17T14:00"}}}
+{"id": "time-026", "message": "haircut in 2 hours", "expected": {"window": {"start": "2026-09-17T11:45", "end": "2026-09-17T12:15"}}}
+{"id": "time-027", "message": "AC repair at noon tomorrow", "expected": {"window": {"start": "2026-09-18T11:45", "end": "2026-09-18T12:15"}}}
+{"id": "time-028", "message": "checkup Sept 25 at 10am", "expected": {"window": {"start": "2026-09-25T09:45", "end": "2026-09-25T10:15"}}}
+{"id": "time-029", "message": "haircut day after tomorrow at 11am", "expected": {"window": {"start": "2026-09-19T10:45", "end": "2026-09-19T11:15"}}}
+{"id": "time-030", "message": "barber half past four today", "expected": {"window": {"start": "2026-09-17T16:15", "end": "2026-09-17T16:45"}}}
+{"id": "time-031", "message": "car ac regas quarter to 8 tomorrow evening", "expected": {"window": {"start": "2026-09-18T19:30", "end": "2026-09-18T20:00"}}}
+{"id": "time-032", "message": "facial Sunday at 15:30", "expected": {"window": {"start": "2026-09-20T15:15", "end": "2026-09-20T15:45"}}}
+{"id": "time-033", "message": "oil change tmrw 4pm", "expected": {"window": {"start": "2026-09-18T15:45", "end": "2026-09-18T16:15"}}}
+{"id": "time-034", "message": "manicure tonight at 8", "expected": {"window": {"start": "2026-09-17T19:45", "end": "2026-09-17T20:15"}}}
+{"id": "time-035", "message": "haircut at 10:30 tomorrow morning", "expected": {"window": {"start": "2026-09-18T10:15", "end": "2026-09-18T10:45"}}}
+{"id": "time-036", "message": "dentist at 9am on Monday", "expected": {"window": {"start": "2026-09-21T08:45", "end": "2026-09-21T09:15"}}}
+{"id": "time-037", "message": "beard trim 6:45pm", "expected": {"window": {"start": "2026-09-17T18:30", "end": "2026-09-17T19:00"}}, "note": "No day given: today."}
+{"id": "time-038", "message": "teeth cleaning at 2", "expected": {"window": {"start": "2026-09-17T13:45", "end": "2026-09-17T14:15"}}, "note": "No day given, and 2am has passed: 2pm today."}
+{"id": "time-039", "message": "facial on the 20th at 6pm", "expected": {"window": {"start": "2026-09-20T17:45", "end": "2026-09-20T18:15"}}}
+{"id": "time-040", "message": "pedicure at 4:15 this afternoon", "expected": {"window": {"start": "2026-09-17T16:00", "end": "2026-09-17T16:30"}}}
+{"id": "time-041", "message": "dentist at 8.30 tomorrow morning", "expected": {"window": {"start": "2026-09-18T08:15", "end": "2026-09-18T08:45"}}}
+{"id": "time-042", "message": "brakes 1pm Sunday", "expected": {"window": {"start": "2026-09-20T12:45", "end": "2026-09-20T13:15"}}}
+{"id": "time-043", "message": "haircut sat 11am", "expected": {"window": {"start": "2026-09-19T10:45", "end": "2026-09-19T11:15"}}}
+{"id": "time-044", "message": "facial wed 3pm", "expected": {"window": {"start": "2026-09-23T14:45", "end": "2026-09-23T15:15"}}}
+{"id": "time-045", "message": "tyres at midday Monday", "expected": {"window": {"start": "2026-09-21T11:45", "end": "2026-09-21T12:15"}}}
+{"id": "time-046", "message": "haircut at 3 o'clock tomorrow", "expected": {"window": {"start": "2026-09-18T14:45", "end": "2026-09-18T15:15"}}, "note": "3am isn't a haircut time."}
+{"id": "time-047", "message": "manicure at 5 tomorrow", "expected": {"window": {"start": "2026-09-18T16:45", "end": "2026-09-18T17:15"}}, "note": "5am isn't a manicure time."}
+{"id": "time-048", "message": "mount tv at 11", "expected": {"window": {"start": "2026-09-17T10:45", "end": "2026-09-17T11:15"}}, "note": "No day given: 11am today, still ahead."}
+{"id": "time-049", "message": "haircut this evening around 7", "expected": {"window": {"start": "2026-09-17T18:45", "end": "2026-09-17T19:15"}}, "note": "A specific time wins over the part of the day."}
+{"id": "time-050", "message": "cleaning at midnight tonight", "expected": {"window": {"start": "2026-09-17T23:45", "end": "2026-09-18T00:15"}}}
+{"id": "time-051", "message": "plumber in 30 minutes", "expected": {"window": {"start": "2026-09-17T10:15", "end": "2026-09-17T10:45"}}, "note": "A specific time: 10:30, 15 minutes either side."}
+{"id": "time-052", "message": "barber bukra sa3a 5", "expected": {"window": {"start": "2026-09-18T16:45", "end": "2026-09-18T17:15"}}, "note": "Arabizi: 'tomorrow at 5'."}
+{"id": "time-053", "message": "gas refill mon evening", "expected": {"window": {"start": "2026-09-21T17:00", "end": "2026-09-21T21:00"}}}
+{"id": "time-054", "message": "plumber tues morning", "expected": {"window": {"start": "2026-09-22T08:00", "end": "2026-09-22T12:00"}}}
+{"id": "time-055", "message": "haircut at 7 tomorrow", "expected": {"window": {"start": "2026-09-18T18:45", "end": "2026-09-18T19:15"}, "alternatives": [{"start": "2026-09-18T06:45", "end": "2026-09-18T07:15"}]}, "note": "7am or 7pm."}
+{"id": "time-056", "message": "blow dry tomorrow 9ish", "expected": {"window": {"start": "2026-09-18T08:45", "end": "2026-09-18T09:15"}, "alternatives": [{"start": "2026-09-18T20:45", "end": "2026-09-18T21:15"}]}, "note": "9am or 9pm."}
+{"id": "time-057", "message": "facial next Saturday", "expected": {"window": {"start": "2026-09-19T00:00", "end": "2026-09-19T23:59"}, "alternatives": [{"start": "2026-09-26T00:00", "end": "2026-09-26T23:59"}]}, "note": "Said on a Thursday, 'next Saturday' is read both ways."}
+{"id": "time-058", "message": "dentist lunchtime tomorrow", "expected": {"window": {"start": "2026-09-18T12:00", "end": "2026-09-18T14:00"}, "alternatives": [{"start": "2026-09-18T12:00", "end": "2026-09-18T13:00"}, {"start": "2026-09-18T11:30", "end": "2026-09-18T14:00"}]}, "note": "Lunchtime isn't in the prompt's list."}
+{"id": "time-059", "message": "AC service tomorrow early morning", "expected": {"window": {"start": "2026-09-18T06:00", "end": "2026-09-18T09:00"}, "alternatives": [{"start": "2026-09-18T08:00", "end": "2026-09-18T12:00"}, {"start": "2026-09-18T07:00", "end": "2026-09-18T10:00"}]}, "note": "Early morning isn't in the prompt's list."}
+{"id": "time-060", "message": "car service late evening Saturday", "expected": {"window": {"start": "2026-09-19T20:00", "end": "2026-09-19T23:59"}, "alternatives": [{"start": "2026-09-19T18:00", "end": "2026-09-19T23:59"}, {"start": "2026-09-19T17:00", "end": "2026-09-19T21:00"}]}, "note": "Late evening isn't in the prompt's list."}
+{"id": "time-061", "message": "haircut before noon Saturday", "expected": {"window": {"start": "2026-09-19T00:00", "end": "2026-09-19T12:00"}, "alternatives": [{"start": "2026-09-19T08:00", "end": "2026-09-19T12:00"}]}, "note": "Any time before noon, or the morning: the same search in practice."}
+{"id": "time-062", "message": "nails tomorrow after 2", "expected": {"window": {"start": "2026-09-18T14:00", "end": "2026-09-18T23:59"}, "alternatives": [{"start": "2026-09-18T14:00", "end": "2026-09-18T17:00"}, {"start": "2026-09-18T14:00", "end": "2026-09-18T21:00"}]}}
+{"id": "time-063", "message": "battery replacement tomorrow before 9am", "expected": {"window": {"start": "2026-09-18T00:00", "end": "2026-09-18T09:00"}, "alternatives": [{"start": "2026-09-18T06:00", "end": "2026-09-18T09:00"}, {"start": "2026-09-18T08:00", "end": "2026-09-18T09:00"}]}}
+{"id": "time-064", "message": "ac service in a couple of hours", "expected": {"window": {"start": "2026-09-17T11:45", "end": "2026-09-17T12:15"}, "alternatives": [{"start": "2026-09-17T11:00", "end": "2026-09-17T13:00"}, {"start": "2026-09-17T12:00", "end": "2026-09-17T14:00"}]}}
+{"id": "time-065", "message": "painting early next week", "expected": {"window": {"start": "2026-09-21T00:00", "end": "2026-09-22T23:59"}, "alternatives": [{"start": "2026-09-21T00:00", "end": "2026-09-23T23:59"}]}, "note": "Monday and Tuesday, or through Wednesday."}
+{"id": "time-066", "message": "ac duct cleaning at the end of the week", "expected": {"window": {"start": "2026-09-19T00:00", "end": "2026-09-20T23:59"}, "alternatives": [{"start": "2026-09-18T00:00", "end": "2026-09-20T23:59"}, {"start": "2026-09-17T10:00", "end": "2026-09-20T23:59"}]}, "note": "The UAE week ends on Sunday."}
+{"id": "time-067", "message": "car battery friday after work", "expected": {"window": {"start": "2026-09-18T17:00", "end": "2026-09-18T21:00"}, "alternatives": [{"start": "2026-09-18T17:00", "end": "2026-09-18T23:59"}, {"start": "2026-09-18T18:00", "end": "2026-09-18T23:59"}]}, "note": "Friday is tomorrow; after work is the evening."}
+{"id": "time-068", "message": "plumber tomorrow between 2 and 4", "expected": {"window": {"start": "2026-09-18T14:00", "end": "2026-09-18T16:00"}}, "note": "An explicit range is taken as given."}
+{"id": "time-069", "message": "painting after 6pm tomorrow", "expected": {"window": {"start": "2026-09-18T18:00", "end": "2026-09-18T23:59"}}}
+{"id": "time-070", "message": "handyman from 3pm onwards tomorrow", "expected": {"window": {"start": "2026-09-18T15:00", "end": "2026-09-18T23:59"}}}
+{"id": "time-071", "message": "plumber between 10 and 12 today", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-17T12:00"}}}
+{"id": "time-072", "message": "painting from 9 to 1 on Saturday", "expected": {"window": {"start": "2026-09-19T09:00", "end": "2026-09-19T13:00"}}}
+{"id": "time-073", "message": "dentist Monday or Tuesday", "expected": {"window": {"start": "2026-09-21T00:00", "end": "2026-09-22T23:59"}}, "note": "Either day: one window covering both."}
+{"id": "time-074", "message": "plumber in the next hour", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-17T11:00"}}}
+{"id": "time-075", "message": "pedicure on the 25th", "expected": {"window": {"start": "2026-09-25T00:00", "end": "2026-09-25T23:59"}}}
+{"id": "time-076", "message": "car service on the 3rd", "expected": {"window": {"start": "2026-10-03T00:00", "end": "2026-10-03T23:59"}}, "note": "The 3rd of September has passed, so October."}
+{"id": "time-077", "message": "whitening October 1st in the morning", "expected": {"window": {"start": "2026-10-01T08:00", "end": "2026-10-01T12:00"}}}
+{"id": "time-078", "message": "ac service sometime next week", "expected": {"window": {"start": "2026-09-21T00:00", "end": "2026-09-27T23:59"}}, "note": "Next week is Monday to Sunday."}
+{"id": "time-079", "message": "pedicure this weekend", "expected": {"window": {"start": "2026-09-19T00:00", "end": "2026-09-20T23:59"}}, "note": "The UAE weekend is Saturday and Sunday."}
+{"id": "time-080", "message": "tyres on the last day of the month", "expected": {"window": {"start": "2026-09-30T00:00", "end": "2026-09-30T23:59"}}}
+{"id": "time-081", "message": "haircut sometime this month", "expected": {"window": {"start": "2026-09-17T10:00", "end": "2026-09-30T23:59"}}}
+{"id": "time-082", "message": "whitening the morning of the 22nd", "expected": {"window": {"start": "2026-09-22T08:00", "end": "2026-09-22T12:00"}}}
+{"id": "time-083", "message": "cleaning next Thursday", "expected": {"window": {"start": "2026-09-24T00:00", "end": "2026-09-24T23:59"}}, "note": "Said on a Thursday: a week today."}
+{"id": "time-084", "message": "handyman in 3 days", "expected": {"window": {"start": "2026-09-20T00:00", "end": "2026-09-20T23:59"}}}
+{"id": "time-085", "message": "haircut a week from today", "expected": {"window": {"start": "2026-09-24T00:00", "end": "2026-09-24T23:59"}}}
+{"id": "time-086", "message": "car service 2 weeks from now", "expected": {"window": {"start": "2026-10-01T00:00", "end": "2026-10-01T23:59"}}}
+{"id": "time-087", "message": "oil change September 30th", "expected": {"window": {"start": "2026-09-30T00:00", "end": "2026-09-30T23:59"}}}
+{"id": "time-088", "message": "whitening on 5/10", "expected": {"window": {"start": "2026-10-05T00:00", "end": "2026-10-05T23:59"}}, "note": "Day/month, as dates are written in the UAE."}
+{"id": "time-089", "message": "checkup 10/10 morning", "expected": {"window": {"start": "2026-10-10T08:00", "end": "2026-10-10T12:00"}}, "note": "Day/month."}
+{"id": "time-090", "message": "haircut Thursday next week", "expected": {"window": {"start": "2026-09-24T00:00", "end": "2026-09-24T23:59"}}}
+{"id": "time-091", "message": "AC wala kal shaam ko", "expected": {"window": {"start": "2026-09-18T17:00", "end": "2026-09-18T21:00"}}, "note": "Hindi: 'the AC person tomorrow evening'. 'kal' is also yesterday, but a booking means tomorrow."}
+{"id": "time-092", "message": "book me a haircut", "expected": {"window": null}}
+{"id": "time-093", "message": "I need 3 AC units serviced", "expected": {"window": null}}
+{"id": "time-094", "message": "oil change, budget 150", "expected": {"window": null}}
+{"id": "time-095", "message": "my car is a 2019 Camry, needs brakes", "expected": {"window": null}}
+{"id": "time-096", "message": "plumber to apartment 1204", "expected": {"window": null}}
+{"id": "time-097", "message": "dentist for me and my 2 kids", "expected": {"window": null}}
+{"id": "time-098", "message": "ac service for my 4 bedroom villa", "expected": {"window": null}}
+{"id": "time-099", "message": "haircut, number 2 on the sides", "expected": {"window": null}}
+{"id": "time-100", "message": "paint 3 rooms", "expected": {"window": null}}

@@ -40,6 +40,12 @@ describe("withoutPlaceholders", () => {
     expect(cleaned.details).toEqual([]);
   });
 
+  it("treats zero as not given — the model wrote budget 0 for no budget in the evals", () => {
+    const cleaned = withoutPlaceholders({ ...nothing, budget_max_aed: 0, choice_number: 0, option_number: 0, order_number: 0 });
+    expect(cleaned).toEqual(nothing);
+    expect(withoutPlaceholders({ ...nothing, budget_max_aed: 150, choice_number: 2 })).toMatchObject({ budget_max_aed: 150, choice_number: 2 });
+  });
+
   it("keeps real values, trimmed", () => {
     const cleaned = withoutPlaceholders({ ...nothing, business_name: "  Marina Cuts ", address: "Villa 7, Jumeirah" });
     expect(cleaned.business_name).toBe("Marina Cuts");

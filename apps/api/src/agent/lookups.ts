@@ -2,6 +2,7 @@ import { getDb, schema, type LocationMode } from "@personal-agent/core";
 import { and, desc, eq, or, sql } from "drizzle-orm";
 
 import { loadOrders } from "../orders.js";
+import { lettersAndDigits, MIN_NAME_KEY } from "./names.js";
 
 const { businesses, businessServices, messages, orders } = schema;
 
@@ -29,17 +30,14 @@ export async function upcomingOrders(userId: string, now: Date): Promise<Upcomin
 
 export type NamedBusiness = { id: string; name: string; address: string; categoryId: string };
 
-const lettersAndDigits = (text: string) => text.toLowerCase().replace(/[^a-z0-9]/g, "");
-
 /**
- * Active businesses whose name matches what the user typed, ignoring case,
- * spaces and punctuation: "marina cuts" finds "Marina Cuts", and so does
- * "Marina Cuts Dubai". Pending and suspended businesses aren't matched, so the
- * user hears "not on the app" rather than learning about them.
+ * Active businesses whose name matches what the user typed — nameMatches'
+ * rule (names.ts), run in SQL. Pending and suspended businesses aren't
+ * matched, so the user hears "not on the app" rather than learning about them.
  */
 export async function businessesNamed(typed: string): Promise<NamedBusiness[]> {
   const key = lettersAndDigits(typed);
-  if (key.length < 3) return [];
+  if (key.length < MIN_NAME_KEY) return [];
 
   const name = sql`regexp_replace(lower(${businesses.name}), '[^a-z0-9]', '', 'g')`;
   return getDb()
@@ -50,7 +48,7 @@ export async function businessesNamed(typed: string): Promise<NamedBusiness[]> {
         eq(businesses.status, "active"),
         or(
           sql`${name} LIKE ${`%${key}%`}::text`,
-          sql`length(${name}) >= 3 AND ${key}::text LIKE '%' || ${name} || '%'`,
+          sql`length(${name}) >= ${MIN_NAME_KEY} AND ${key}::text LIKE '%' || ${name} || '%'`,
         ),
       ),
     )

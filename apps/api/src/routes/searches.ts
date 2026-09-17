@@ -1,5 +1,5 @@
 import { bookOption, getDb, OrderError, runSearch, schema } from "@personal-agent/core";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { Router } from "express";
 import { z } from "zod";
 
@@ -46,6 +46,12 @@ searchesRouter.post("/:id/book", async (req, res) => {
     });
   } catch (error) {
     if (!(error instanceof OrderError) || error.code !== "slot_unavailable") throw error;
+
+    // Counted for the product metrics; only an owned, presenting search gets this far.
+    await getDb()
+      .update(searches)
+      .set({ slotConflicts: sql`${searches.slotConflicts} + 1` })
+      .where(eq(searches.id, searchId));
 
     // Search again and show a fresh list, rather than making the user start over.
     await runSearch(searchId);

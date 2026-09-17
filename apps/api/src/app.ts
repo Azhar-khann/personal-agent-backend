@@ -10,6 +10,7 @@ import { errorHandler, notFound } from "./http.js";
 import { adminRouter } from "./routes/admin.js";
 import { businessRouter } from "./routes/business.js";
 import { categoriesRouter } from "./routes/categories.js";
+import { chatRouter } from "./routes/chat.js";
 import { meRouter } from "./routes/me.js";
 import { ordersRouter } from "./routes/orders.js";
 import { searchesRouter } from "./routes/searches.js";
@@ -34,6 +35,7 @@ export function createApp(env: ApiEnv, logger: Logger) {
 
   // User app
   app.use("/api/me", requireUser, meRouter);
+  app.use("/api/chat", requireUser, chatRouter(env));
   app.use("/api/searches", requireUser, searchesRouter);
   app.use("/api/orders", requireUser, ordersRouter);
 

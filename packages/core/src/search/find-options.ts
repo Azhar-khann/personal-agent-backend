@@ -6,6 +6,7 @@
  */
 
 import { and, eq, gt, inArray, lt } from "drizzle-orm";
+import { traceable } from "langsmith/traceable";
 
 import { getDb, getSql } from "../db/client.js";
 import {
@@ -23,6 +24,7 @@ import {
   freeSlots,
   spreadSlots,
   type BusyAppointment,
+  type FreeSlot,
   type Interval,
   type OpeningHours,
 } from "./availability.js";
@@ -226,68 +228,75 @@ async function visitedBusinesses(userId: string, businessIds: string[]): Promise
   return new Set(rows.map((row) => row.businessId));
 }
 
-export async function findOptions(p: FindOptionsParams): Promise<FindOptionsResult> {
-  const now = p.now ?? new Date();
+// The three §5 steps, each a span in the chat turn's LangSmith trace. With
+// tracing off (LANGSMITH_TRACING unset), traceable just calls through.
 
-  const candidates = (await findCandidates(p))
-    // §5: drop any row further away than that business's radius.
-    .filter((c) => c.distance_km <= c.radius_km)
-    // Phase 1 books single-step services; chaining steps is Stage 9.
-    .filter((c) => c.steps.length === 1);
+/** Step 1: businesses that could possibly do this job. */
+const filterStep = traceable(
+  async (p: FindOptionsParams) =>
+    (await findCandidates(p))
+      // §5: drop any row further away than that business's radius.
+      .filter((c) => c.distance_km <= c.radius_km)
+      // Phase 1 books single-step services; chaining steps is Stage 9.
+      .filter((c) => c.steps.length === 1),
+  { name: "filter", run_type: "retriever" },
+);
 
-  if (candidates.length === 0) return { matched: 0, options: [] };
+/** Step 2: the free times at each, dropping businesses with none. */
+const availabilityStep = traceable(
+  async (candidates: CandidateRow[], window: Interval, now: Date) => {
+    // A slot starts before the window ends, then holds its duration and buffer.
+    const longestMin = Math.max(...candidates.map((c) => c.steps[0]!.duration_min + c.buffer_min));
+    const range = { start: window.start, end: new Date(window.end.getTime() + longestMin * 60_000) };
+    const availability = await loadAvailability(candidates.map((c) => c.id), range);
 
-  const ids = candidates.map((c) => c.id);
-  // A slot starts before the window ends, then holds its duration and buffer.
-  const longestMin = Math.max(...candidates.map((c) => c.steps[0]!.duration_min + c.buffer_min));
-  const range = { start: p.window.start, end: new Date(p.window.end.getTime() + longestMin * 60_000) };
-
-  const [availability, visited] = await Promise.all([
-    loadAvailability(ids, range),
-    visitedBusinesses(p.userId, ids),
-  ]);
-
-  const withSlots = candidates.flatMap((c) => {
-    const slots = freeSlots({
-      now,
-      window: p.window,
-      durationMin: c.steps[0]!.duration_min,
-      rules: {
-        capacity: c.capacity,
-        slotIntervalMin: c.slot_interval_min,
-        bufferMin: c.buffer_min,
-        leadTimeMin: c.lead_time_min,
-        maxAdvanceDays: c.max_advance_days,
-      },
-      ...availability.get(c.id)!,
+    return candidates.flatMap((candidate) => {
+      const slots = freeSlots({
+        now,
+        window,
+        durationMin: candidate.steps[0]!.duration_min,
+        rules: {
+          capacity: candidate.capacity,
+          slotIntervalMin: candidate.slot_interval_min,
+          bufferMin: candidate.buffer_min,
+          leadTimeMin: candidate.lead_time_min,
+          maxAdvanceDays: candidate.max_advance_days,
+        },
+        ...availability.get(candidate.id)!,
+      });
+      // §5: a business with no free slots in the window is dropped entirely.
+      return slots.length > 0 ? [{ candidate, slots }] : [];
     });
-    // §5: a business with no free slots in the window is dropped entirely.
-    if (slots.length === 0) return [];
+  },
+  { name: "availability" },
+);
 
-    const priceAed = c.price_aed === null ? null : Number(c.price_aed);
-    const score = rankingScore({
-      distanceKm: c.distance_km,
-      radiusKm: c.radius_km,
-      timesShown: c.shown,
-      timesSelected: c.selected,
-      bookingsTotal: c.bookings_total,
-      cancellationsByBusiness: c.cancellations,
-      priceAed,
-      budgetMaxAed: p.budgetMaxAed,
-      visitedBefore: visited.has(c.id),
+/** Step 3: score, sort, keep the top five with three spread times each. */
+const rankStep = traceable(
+  async (available: { candidate: CandidateRow; slots: FreeSlot[] }[], p: FindOptionsParams): Promise<SearchOption[]> => {
+    const visited = await visitedBusinesses(p.userId, available.map(({ candidate }) => candidate.id));
+
+    const scored = available.map(({ candidate: c, slots }) => {
+      const priceAed = c.price_aed === null ? null : Number(c.price_aed);
+      const score = rankingScore({
+        distanceKm: c.distance_km,
+        radiusKm: c.radius_km,
+        timesShown: c.shown,
+        timesSelected: c.selected,
+        bookingsTotal: c.bookings_total,
+        cancellationsByBusiness: c.cancellations,
+        priceAed,
+        budgetMaxAed: p.budgetMaxAed,
+        visitedBefore: visited.has(c.id),
+      });
+      return { c, slots, priceAed, score };
     });
-    return [{ candidate: c, slots, priceAed, score }];
-  });
 
-  // Highest score first; nearer wins a tie, so the order is stable.
-  withSlots.sort(
-    (a, b) => b.score - a.score || a.candidate.distance_km - b.candidate.distance_km,
-  );
+    // Highest score first; nearer wins a tie, so the order is stable.
+    scored.sort((a, b) => b.score - a.score || a.c.distance_km - b.c.distance_km);
 
-  return {
-    matched: candidates.length,
     // Fewer than five is shown as it is, never padded (§7).
-    options: withSlots.slice(0, MAX_OPTIONS).map(({ candidate: c, slots, priceAed, score }, i) => ({
+    return scored.slice(0, MAX_OPTIONS).map(({ c, slots, priceAed, score }, i) => ({
       rank: i + 1,
       rankScore: score,
       businessId: c.id,
@@ -296,6 +305,19 @@ export async function findOptions(p: FindOptionsParams): Promise<FindOptionsResu
       priceAed,
       distanceKm: c.distance_km,
       offeredSlots: spreadSlots(slots, SLOTS_PER_OPTION).map((slot) => slot.start),
-    })),
-  };
+    }));
+  },
+  { name: "rank" },
+);
+
+export async function findOptions(p: FindOptionsParams): Promise<FindOptionsResult> {
+  const now = p.now ?? new Date();
+
+  const candidates = await filterStep(p);
+  if (candidates.length === 0) return { matched: 0, options: [] };
+
+  const available = await availabilityStep(candidates, p.window, now);
+  if (available.length === 0) return { matched: candidates.length, options: [] };
+
+  return { matched: candidates.length, options: await rankStep(available, p) };
 }

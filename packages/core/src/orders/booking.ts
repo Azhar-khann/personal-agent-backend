@@ -155,7 +155,9 @@ export function bookOption(input: {
       if (resourceIndex === null) throw slotUnavailable();
 
       const atCustomer = service.locationMode === "at_customer";
-      const notes = (search.constraints as { notes?: unknown }).notes;
+      // What the agent collected is for the business to read — except the
+      // budget, which only ranked the options.
+      const { budget_max: _budget, ...details } = search.constraints as Record<string, unknown>;
 
       const [order] = await tx
         .insert(orders)
@@ -168,7 +170,7 @@ export function bookOption(input: {
           serviceAddress: atCustomer ? search.address : null,
           serviceLat: atCustomer ? search.lat : null,
           serviceLng: atCustomer ? search.lng : null,
-          details: typeof notes === "string" ? { notes } : {},
+          details,
           // Copied, so a later price rise leaves this order as agreed.
           priceAed: service.priceAed,
         })

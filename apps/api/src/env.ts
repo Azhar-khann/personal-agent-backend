@@ -7,6 +7,12 @@ const apiEnvSchema = z.object({
   CLERK_SECRET_KEY: z.string().min(1),
   CLERK_PUBLISHABLE_KEY: z.string().min(1),
 
+  OPENAI_API_KEY: z.string().min(1),
+  // The agent makes one structured model call per chat message. Overridable,
+  // so the Stage 8 evals can compare models.
+  AGENT_MODEL: z.string().min(1).default("gpt-5.6-terra"),
+  AGENT_REASONING_EFFORT: z.enum(["minimal", "low", "medium", "high"]).default("low"),
+
   // The frontend is a separate deployment, so browsers call this API
   // cross-origin. Comma-separated.
   CORS_ORIGINS: z

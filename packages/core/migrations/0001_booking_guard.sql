@@ -13,7 +13,7 @@
 
 -- GiST understands `&&` (overlap) on ranges natively, but not plain equality
 -- on scalars like uuid and int. btree_gist teaches it those, which is what
--- lets one index combine "same business AND same chair AND overlapping time".
+-- lets one index combine "same business AND same resource AND overlapping time".
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 --> statement-breakpoint
 
@@ -59,7 +59,7 @@ UPDATE bookings
    SET ends_at = scheduled_at + make_interval(mins => duration_min + buffer_min);
 --> statement-breakpoint
 
--- No two active bookings may share the same business, the same chair, and
+-- No two active bookings may share the same business, the same resource, and
 -- overlapping times. tstzrange is half-open, so a booking starting exactly
 -- when the previous one's buffer ends does NOT overlap — without that, every
 -- appointment would silently waste the following slot.

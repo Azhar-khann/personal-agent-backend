@@ -160,7 +160,7 @@ describe("freeSlots — existing appointments", () => {
     expect(result).toContain("2030-01-07T10:45");
   });
 
-  it("gives out three chairs at the same time, then the time is gone", () => {
+  it("gives out three resources at the same time, then the time is gone", () => {
     const twoTaken = [
       booked(0, "2030-01-07T10:00", "2030-01-07T10:30"),
       booked(1, "2030-01-07T10:00", "2030-01-07T10:30"),
@@ -174,7 +174,7 @@ describe("freeSlots — existing appointments", () => {
     expect(tenOClock([...twoTaken, booked(2, "2030-01-07T10:00", "2030-01-07T10:30")])).toBeUndefined();
   });
 
-  it("takes the lowest free chair", () => {
+  it("takes the lowest free resource", () => {
     const result = slots({
       hours,
       appointments: [booked(0, "2030-01-07T09:00", "2030-01-07T12:00")],
@@ -183,7 +183,7 @@ describe("freeSlots — existing appointments", () => {
     expect(result[0]?.resourceIndex).toBe(1);
   });
 
-  it("ignores an appointment on a chair above a reduced capacity", () => {
+  it("ignores an appointment on a resource above a reduced capacity", () => {
     const result = slots({
       hours,
       appointments: [booked(1, "2030-01-07T09:00", "2030-01-07T12:00")],
@@ -192,7 +192,7 @@ describe("freeSlots — existing appointments", () => {
     expect(result[0]).toEqual({ start: at("2030-01-07T09:00"), resourceIndex: 0 });
   });
 
-  it("returns nothing when every chair is taken all day", () => {
+  it("returns nothing when every resource is taken all day", () => {
     const result = slots({
       hours,
       appointments: [booked(0, "2030-01-07T09:00", "2030-01-07T12:00")],

@@ -32,7 +32,7 @@ export type BookingRules = {
 /** An appointment already holding time. `end` is its ends_at, buffer included. */
 export type BusyAppointment = { resourceIndex: number; start: Date; end: Date };
 
-/** A bookable start time, and the lowest chair free at that time. */
+/** A bookable start time, and the lowest resource free at that time. */
 export type FreeSlot = { start: Date; resourceIndex: number };
 
 export type AvailabilityInput = {
@@ -121,7 +121,7 @@ function openRanges(hours: OpeningHours[], firstDay: number, lastDay: number) {
  * - Nothing earlier than now + lead time, or later than now + max advance days.
  * - The appointment must not overlap a closure. Its buffer may: that's cleanup
  *   after the customer has gone.
- * - A chair is free when none of its appointments overlaps the appointment
+ * - A resource is free when none of its appointments overlaps the appointment
  *   plus its buffer — the same range the no_double_booking constraint checks,
  *   so the engine never offers a time the database would refuse.
  */
@@ -139,10 +139,10 @@ export function freeSlots(input: AvailabilityInput): FreeSlot[] {
   const lastDay = localDay(windowEnd - 1);
   const open = openRanges(input.hours, firstDay, lastDay);
 
-  // Appointments by chair. One on a chair at or above the capacity stands (a
-  // business reduced its capacity, §7) but doesn't block the chairs that remain.
-  const chairs: BusyAppointment[][] = Array.from({ length: rules.capacity }, () => []);
-  for (const appointment of input.appointments) chairs[appointment.resourceIndex]?.push(appointment);
+  // Appointments by resource. One on a resource at or above the capacity stands
+  // (the business reduced its capacity, §7) but doesn't block the resources that remain.
+  const resources: BusyAppointment[][] = Array.from({ length: rules.capacity }, () => []);
+  for (const appointment of input.appointments) resources[appointment.resourceIndex]?.push(appointment);
 
   const slots: FreeSlot[] = [];
   const step = rules.slotIntervalMin * MINUTE_MS;
@@ -158,7 +158,7 @@ export function freeSlots(input: AvailabilityInput): FreeSlot[] {
       if (input.closures.some((c) => c.start.getTime() < end && c.end.getTime() > start)) continue;
 
       const busyUntil = start + occupies;
-      const resourceIndex = chairs.findIndex((appointments) =>
+      const resourceIndex = resources.findIndex((appointments) =>
         appointments.every((a) => a.start.getTime() >= busyUntil || a.end.getTime() <= start),
       );
       if (resourceIndex === -1) continue;

@@ -58,7 +58,7 @@ businessOrdersRouter.get("/calendar", async (req, res) => {
     appointments: rows.map(({ appointment, order, serviceName, customer }) => ({
       id: appointment.id,
       kind: appointment.kind,
-      // Which chair: the calendar is split by chair (§10).
+      // Which resource: the calendar is split by resource (§10).
       resourceIndex: appointment.resourceIndex,
       scheduledAt: appointment.scheduledAt,
       durationMin: appointment.durationMin,

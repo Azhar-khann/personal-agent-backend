@@ -617,8 +617,10 @@ export const appointments = pgTable(
       .references(() => businesses.id),
     // 'job' for a plain service; 'visit' for a quote's site visit.
     kind: text("kind").notNull(),
-    // Which chair or bay. Capacity 3 uses 0, 1, 2 — this is what lets three
-    // people book 3pm without clashing.
+    // Which of the business's interchangeable resources this appointment uses:
+    // whatever its capacity counts — a chair, a treatment room, a service bay,
+    // a technician or crew. Capacity 3 uses 0, 1 and 2; this is what lets three
+    // appointments share a time without clashing.
     resourceIndex: integer("resource_index").notNull().default(0),
     scheduledAt: tstz("scheduled_at").notNull(),
     durationMin: integer("duration_min").notNull(),

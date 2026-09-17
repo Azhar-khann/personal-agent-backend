@@ -57,8 +57,8 @@ async function businessSlots(args: {
   });
 }
 
-/** The lowest free chair at exactly `slotAt`, or null if that time can't be booked. */
-async function freeChairAt(args: {
+/** The lowest free resource at exactly `slotAt`, or null if that time can't be booked. */
+async function freeResourceAt(args: {
   business: Business;
   durationMin: number;
   slotAt: Date;
@@ -146,7 +146,7 @@ export function bookOption(input: {
         throw slotUnavailable();
       }
 
-      const resourceIndex = await freeChairAt({
+      const resourceIndex = await freeResourceAt({
         business,
         durationMin: step.duration_min,
         slotAt: input.slotAt,
@@ -291,7 +291,7 @@ export function rescheduleOrder(input: {
       const current = await movableAppointment(tx, order, now);
       const business = assertBookable(await lockBusiness(tx, order.businessId));
 
-      const resourceIndex = await freeChairAt({
+      const resourceIndex = await freeResourceAt({
         business,
         durationMin: current.durationMin,
         slotAt: input.slotAt,
